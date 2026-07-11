@@ -6,6 +6,13 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.11.3
+
+### Fixed
+- **Highlighting with the mouse is under control again.** On the editable page, dragging to select a few lines could run away: the page scrolled out from under the pointer and the highlight raced to the end of the note. Selection now follows the mouse and stops where you stop. Typing is unchanged, and the writing line still holds its place at the middle of the page.
+
+---
+
 ## v1.11.2
 
 ### Fixed

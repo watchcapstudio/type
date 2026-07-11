@@ -1618,6 +1618,18 @@
     // desktop: enable spellcheck so macOS native autocorrect engages (iOS uses the
     // autocorrect attribute and keeps spellcheck off — no squiggles)
     if (window.typeAPI && window.typeAPI.isDesktop) editSurface.setAttribute('spellcheck', 'true');
+    // desktop mouse selection: the 50vh scroll-padding-bottom that parks the
+    // caret at the strike line also governs how Blink reveals the selection
+    // end mid-drag. That's a feedback loop — the reveal scrolls the selection
+    // end up to the strike line, the text slides under the stationary pointer,
+    // the selection extends another line, the reveal scrolls again — so a
+    // three-line drag zips to the end of the note. Suspend the padding while
+    // the mouse button is down; typing gets its caret parking back on release.
+    editSurface.addEventListener('mousedown', () => {
+      if (document.body.classList.contains('ios')) return;   // touch selection never drags this way
+      editSurface.style.scrollPaddingBottom = '0px';
+      window.addEventListener('mouseup', () => { editSurface.style.scrollPaddingBottom = ''; }, { once: true });
+    });
     editSurface.addEventListener('input', (e) => {
       if (!editActive()) return;
       syncFromEditable();
