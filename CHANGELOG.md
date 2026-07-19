@@ -6,6 +6,14 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.12.0
+
+### New
+- **Spelling help, at last.** Misspelled words get the familiar red dotted underline, and a right-click now offers corrections, along with Learn Spelling and the usual cut, copy, and paste. The Spell check switch in settings turns the whole thing on or off.
+- **Spell check on iPhone too.** With Autocorrect on, the phone now underlines misspellings as you write. Tap a marked word to pick a replacement.
+
+---
+
 ## v1.11.3
 
 ### Fixed

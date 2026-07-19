@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Menu, MenuItem, shell, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -85,6 +85,35 @@ function createWindow() {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
     return { action: 'deny' };
+  });
+
+  // right-click on a misspelled word: spelling suggestions, the macOS way.
+  // Chromium draws the squiggles but Electron shows no context menu unless we
+  // build one — without this, spell check has no way to offer the fix.
+  win.webContents.on('context-menu', (e, params) => {
+    const menu = new Menu();
+    for (const s of params.dictionarySuggestions.slice(0, 5)) {
+      menu.append(new MenuItem({ label: s, click: () => win.webContents.replaceMisspelling(s) }));
+    }
+    if (params.misspelledWord) {
+      if (menu.items.length) menu.append(new MenuItem({ type: 'separator' }));
+      menu.append(new MenuItem({
+        label: 'Learn Spelling',
+        click: () => win.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord),
+      }));
+    }
+    // the standard edit verbs, only where they make sense — an empty right-click
+    // on the paper stays chrome-free
+    if (params.isEditable) {
+      if (menu.items.length) menu.append(new MenuItem({ type: 'separator' }));
+      menu.append(new MenuItem({ role: 'cut' }));
+      menu.append(new MenuItem({ role: 'copy' }));
+      menu.append(new MenuItem({ role: 'paste' }));
+    } else if (params.selectionText) {
+      if (menu.items.length) menu.append(new MenuItem({ type: 'separator' }));
+      menu.append(new MenuItem({ role: 'copy' }));
+    }
+    if (menu.items.length) menu.popup();
   });
 }
 

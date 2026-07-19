@@ -1540,10 +1540,13 @@
   });
   // Autocorrect & the predictive suggestion bar are one iOS feature (autocorrectionType):
   // off = no bar (no emoji/word suggestions) AND no auto-fixing. Drives both writing surfaces.
+  // The same toggle drives spellcheck: squiggles + tap-a-word suggestions on iOS,
+  // squiggles + right-click suggestions on Mac (menu built in main.js).
   function applyAutocorrect() {
     const v = settings.autocorrect ? 'on' : 'off';
-    if (editSurface) editSurface.setAttribute('autocorrect', v);
-    if (activeEl) activeEl.setAttribute('autocorrect', v);
+    const sc = settings.autocorrect ? 'true' : 'false';
+    if (editSurface) { editSurface.setAttribute('autocorrect', v); editSurface.setAttribute('spellcheck', sc); }
+    if (activeEl) { activeEl.setAttribute('autocorrect', v); activeEl.setAttribute('spellcheck', sc); }
     // the change only takes hold on the next focus; if a surface is focused now, re-arm it
     const f = document.activeElement;
     if (f === editSurface || (activeEl && f === activeEl)) { f.blur(); setTimeout(() => { try { f.focus(); } catch (e) {} }, 0); }
@@ -1615,9 +1618,6 @@
     else if (editActive()) exitEditableToPlaten();
   }
   if (editSurface) {
-    // desktop: enable spellcheck so macOS native autocorrect engages (iOS uses the
-    // autocorrect attribute and keeps spellcheck off — no squiggles)
-    if (window.typeAPI && window.typeAPI.isDesktop) editSurface.setAttribute('spellcheck', 'true');
     // desktop mouse selection: the 50vh scroll-padding-bottom that parks the
     // caret at the strike line also governs how Blink reveals the selection
     // end mid-drag. That's a feedback loop — the reveal scrolls the selection
@@ -1704,9 +1704,13 @@
 
   // Sound has 3 sub-toggles (clicks / carriage / bell) that only matter when
   // sound is on — keep them tucked away otherwise to keep the panel short.
-  // apply the autocorrect setting to the textarea at load (the live platen line
-  // doesn't exist yet — renderActive sets it from settings.autocorrect when built)
-  if (editSurface) editSurface.setAttribute('autocorrect', settings.autocorrect ? 'on' : 'off');
+  // apply the autocorrect + spellcheck setting to the textarea at load (the live
+  // platen line doesn't exist yet — renderActive sets it when built; don't call
+  // applyAutocorrect here, activeEl's `let` hasn't run yet)
+  if (editSurface) {
+    editSurface.setAttribute('autocorrect', settings.autocorrect ? 'on' : 'off');
+    editSurface.setAttribute('spellcheck', settings.autocorrect ? 'true' : 'false');
+  }
   const toggleSettings = () => {
     settingsEl.hidden = !settingsEl.hidden;
     if (!settingsEl.hidden) { hints.classList.remove('dim'); if (activeEl) activeEl.blur(); if (editSurface) editSurface.blur(); }
@@ -2744,9 +2748,9 @@
       activeEl.dataset.bound = '1';
       activeEl.setAttribute('autocorrect', settings.autocorrect ? 'on' : 'off');   // off → no predictive bar (no emoji/word suggestions)
       activeEl.setAttribute('autocapitalize', 'sentences');
-      // macOS (Electron) gates native autocorrect behind spellcheck, so turn it on
-      // there; iOS gets autocorrect from the autocorrect attribute and stays clean
-      activeEl.setAttribute('spellcheck', (window.typeAPI && window.typeAPI.isDesktop) ? 'true' : 'false');
+      // spellcheck rides the same toggle on both platforms: squiggles + tap
+      // suggestions on iOS, squiggles + right-click suggestions on Mac
+      activeEl.setAttribute('spellcheck', settings.autocorrect ? 'true' : 'false');
       bindActive(activeEl);
     }
     if (cr) activeEl.classList.add('cr');
