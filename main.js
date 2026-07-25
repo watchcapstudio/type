@@ -354,7 +354,7 @@ ipcMain.handle('type:open-folder', async (_e, dir) => {
 });
 
 // --- auto-update ---
-// reads latest-mac.yml from GitHub Releases (kvohs/type), downloads the new
+// reads latest-mac.yml from GitHub Releases (watchcapstudio/type), downloads the new
 // dmg in the background, prompts on quit to install. needs the .app to be
 // signed + notarized, which it is.
 autoUpdater.autoDownload = true;
