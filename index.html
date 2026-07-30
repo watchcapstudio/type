@@ -1411,6 +1411,18 @@
     const whyBtn = document.createElement('button'); whyBtn.type = 'button';
     whyBtn.className = 'setfoot-link'; whyBtn.id = 'footWhy'; whyBtn.textContent = 'why?';
     parts.push(whyBtn);
+    // The studio's two legal pages. One Terms and one Privacy cover everything
+    // WatchCap makes, so they live on watchcapstudio.com, not on type's page.
+    const LEGAL = [
+      ['privacy', 'https://watchcapstudio.com/privacy'],
+      ['terms', 'https://watchcapstudio.com/terms'],
+    ];
+    LEGAL.forEach(([label, url]) => {
+      const b = document.createElement('button'); b.type = 'button';
+      b.className = 'setfoot-link'; b.textContent = label;
+      b.addEventListener('click', () => { window.open(url, '_blank', 'noopener'); });
+      parts.push(b);
+    });
     parts.forEach((p, i) => {
       if (i > 0) {
         const sep = document.createElement('span');
