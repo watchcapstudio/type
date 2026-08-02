@@ -1496,7 +1496,13 @@
   // shared Supabase usage_event log with the public anon key.
   const Activity = (() => {
     const SUPABASE_URL = 'https://jrxwlskrlsmprxgrbxaf.supabase.co';
-    const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyeHdsc2tybHNtcHJ4Z3JieGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjMxNzAsImV4cCI6MjA5NTM5OTE3MH0.Kp1gjrUYEMJqBXKdpCWf4TZm57WjUrFikJAb23B0ylQ';
+    // The publishable key, not the legacy anon JWT. Both are public by
+    // design; the difference is that the legacy anon key shares a secret
+    // with Dispatch's service_role key, which was exposed on 2026-07-29.
+    // Revoking that one would have killed this too, in every shipped copy
+    // of type. The new keys revoke independently. (Dispatch work board
+    // #121 — this app writes to that project's usage_event log.)
+    const ANON = 'sb_publishable_-gzsXHUa0VZTcp8_nyKDKw_nDjvKrW8';
     const T = (typeof window !== 'undefined' && window.typeAPI) || {};
     const platform = T.isIOS ? 'ios' : 'mac';
     const sent = new Set();
