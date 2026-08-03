@@ -380,6 +380,15 @@
     68%  { opacity: 1; }
     100% { opacity: 0; transform: translate(-50%,-50%) scale(1); }
   }
+  /* A failed keep is not a flash. stampSeq ends at opacity 0, which is right for
+     "kept" and exactly wrong for "not saved" — a warning that fades itself out is
+     how a lost page slips past you. This one arrives and stays put. */
+  .stamp.failed.show { animation: stampHold .28s ease forwards; }
+  @keyframes stampHold {
+    from { opacity: 0; transform: translate(-50%,-50%) scale(1.14); }
+    to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  }
+  .stamp.failed .date { color: var(--ink); }
   .stamp .date {
     font-family: var(--mono); font-weight: 700;
     font-size: 15px; letter-spacing: .34em; text-indent: .34em;
@@ -3005,26 +3014,80 @@
     }
     saveNow();
   }
-  function saveNow() {
+  // Rolling record of the last 40 keeps, kept in localStorage so it survives a
+  // quit. Not a feature — a black box. When a page turns up merged into another
+  // one, or missing, this says how many keeps actually ran and how big each was.
+  // Read it with: JSON.parse(localStorage.getItem('type.keeplog'))
+  const KEEPLOG_KEY = 'type.keeplog';
+  function noteKeepAttempt(filename, chars, ok) {
+    try {
+      const log = JSON.parse(localStorage.getItem(KEEPLOG_KEY) || '[]');
+      log.push({ t: new Date().toISOString(), filename, chars, ok });
+      localStorage.setItem(KEEPLOG_KEY, JSON.stringify(log.slice(-40)));
+    } catch (e) {}
+  }
+
+  // The write failed. Leave the page exactly where it is, leave the draft in
+  // localStorage, and say so plainly. No eject, no "words kept" stamp, no bell:
+  // the whole point is that this must not resemble a successful keep.
+  function keepFailed(msg) {
+    frozen = false;
+    syncEditableSurface();
+    persistDraft();
+    try {
+      stampDate.textContent = 'NOT SAVED';
+      stampKept.textContent = (msg ? String(msg).slice(0, 90) : 'the file could not be written') + '. Your page is still here.';
+      stampEl.classList.remove('show'); void stampEl.offsetWidth;
+      stampEl.classList.add('failed', 'show');
+      // Clears on the next keystroke, so it can't sit on top of the page you're
+      // trying to rescue. No timer: it must not vanish on its own.
+      const clear = () => {
+        stampEl.classList.remove('failed', 'show');
+        window.removeEventListener('keydown', clear, true);
+      };
+      window.addEventListener('keydown', clear, true);
+    } catch (e) {}
+  }
+
+  // A keep that never reached disk must not look like one that did. Everything
+  // below the write is celebration (eject, stamp, bell, fresh sheet), so none of
+  // it runs until the write is confirmed. See keepFailed().
+  async function saveNow() {
     frozen = true;
     coolSmolder();
     const prose = [...locked, current].join('\n').replace(/\s+$/,'');
     const words = (prose.match(/\S+/g) || []).length;
     const now = new Date();
+    // Local time, deliberately not toISOString(). That returns UTC, which dated
+    // every kept page 4-5 hours ahead of when it was actually written, and filed
+    // anything kept after ~8pm ET under the following day. The Day One sync reads
+    // the date straight off the filename, so the skew landed in the journal.
+    const pad = (n) => String(n).padStart(2, '0');
+    const ymd = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const hms = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
     // a small YAML frontmatter so kept pages are self-dating; tools like Obsidian
     // hide it, and the prose still reads as a plain page underneath.
     const stamp = now.toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
-    const front = `---\ndate: ${now.toISOString().slice(0,10)}\nkept: ${stamp}\nwords: ${words}\n---\n\n`;
+    const front = `---\ndate: ${ymd}\nkept: ${stamp}\nwords: ${words}\n---\n\n`;
     const body = front + prose + '\n';
-    // seconds, not minutes — two pages kept in the same minute were colliding
+    // seconds, not minutes: two pages kept in the same minute were colliding
     // on one filename and the second overwrote the first ("not saving recent").
-    const fileStamp = now.toISOString().slice(0,19).replace(/[:T]/g,'-');
-    const filename = `type-${fileStamp}.md`;
+    const filename = `type-${ymd}-${hms}.md`;
 
     if (window.typeAPI && window.typeAPI.saveNote) {
       // desktop: write a .md file to the chosen folder (or Downloads).
       // iOS: the bridge writes it into iCloud Drive → type.
-      window.typeAPI.saveNote({ dir: settings.saveDir || null, content: body, filename });
+      // Desktop resolves {ok:true, file} or {ok:false, error}. The iOS bridge is a
+      // bare postMessage and resolves undefined, so ONLY an explicit ok:false is a
+      // failure. Anything else proceeds, which is exactly what iOS always did.
+      let res;
+      try {
+        res = await window.typeAPI.saveNote({ dir: settings.saveDir || null, content: body, filename });
+      } catch (err) {
+        res = { ok: false, error: String((err && err.message) || err) };
+      }
+      noteKeepAttempt(filename, body.length, !(res && res.ok === false));
+      if (res && res.ok === false) { keepFailed(res.error); return; }
     } else {
       // browser: download a .md file
       const blob = new Blob([body], { type: 'text/markdown' });
@@ -3054,7 +3117,7 @@
       stampDate.textContent = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase().replace(/,/g,'');
       stampKept.textContent = (words === 1 ? '1 word kept' : `${words} words kept`) +
         (window.__typeSaveDest ? ' · ' + window.__typeSaveDest : '');   // iOS says where it landed
-      stampEl.classList.remove('show'); void stampEl.offsetWidth;
+      stampEl.classList.remove('failed', 'show'); void stampEl.offsetWidth;
       stampEl.classList.add('show');
       bell(0.1);
     }, 620);
