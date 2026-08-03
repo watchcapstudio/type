@@ -6,6 +6,14 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.12.1
+
+### Fixed
+- **A keep that fails now says so.** If the file could not be written, type used to eject the page, ring the bell and stamp it kept anyway, so a lost page looked exactly like a saved one. Now the page stays on screen, your draft stays put, and the stamp reads NOT SAVED until you touch the keyboard again.
+- **Kept pages are dated in your own time.** Filenames and the date in the frontmatter were written in UTC, so a page kept in the evening was dated tomorrow and reached your journal under the wrong day.
+
+---
+
 ## v1.12.0
 
 ### New
