@@ -119,7 +119,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					3414C63B30262EA21C1C5AA1 = {
-						DevelopmentTeam = CAKM5U4VR2;
+						DevelopmentTeam = 65TGBNLX53;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -208,7 +208,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.kellyvohs.type;
+				PRODUCT_BUNDLE_IDENTIFIER = com.watchcapstudio.type;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -250,7 +250,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 8;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = CAKM5U4VR2;
+				DEVELOPMENT_TEAM = 65TGBNLX53;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -292,7 +292,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.kellyvohs.type;
+				PRODUCT_BUNDLE_IDENTIFIER = com.watchcapstudio.type;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -334,7 +334,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 8;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = CAKM5U4VR2;
+				DEVELOPMENT_TEAM = 65TGBNLX53;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;

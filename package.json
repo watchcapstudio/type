@@ -13,7 +13,7 @@
     "dist:unsigned": "CSC_IDENTITY_AUTODISCOVERY=false electron-builder --mac -c.mac.notarize=false -c.mac.identity=null"
   },
   "build": {
-    "appId": "com.kellyvohs.type",
+    "appId": "com.watchcapstudio.type",
     "productName": "type",
     "publish": [
       {
@@ -53,10 +53,11 @@
       "x64ArchFiles": "Contents/Resources/type-share",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
+      "identity": "BTTY, LLC (65TGBNLX53)",
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "notarize": {
-        "teamId": "CAKM5U4VR2"
+        "teamId": "65TGBNLX53"
       }
     },
     "dmg": {

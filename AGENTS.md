@@ -82,7 +82,7 @@ Already wired. Repo secrets at github.com/watchcapstudio/type/settings/secrets/a
   "type .p12 password (Developer ID)" in the Watchcap vault)
 - `APPLE_ID` — Apple ID email for the developer account
 - `APPLE_APP_SPECIFIC_PASSWORD` — generated at appleid.apple.com
-- `APPLE_TEAM_ID` — `CAKM5U4VR2`
+- `APPLE_TEAM_ID` — `65TGBNLX53`
 
 Cert is good until **May 24, 2031**. No re-auth needed before then unless it's
 revoked or the .p12 password is lost.

@@ -5,18 +5,18 @@
 set -u
 cd "$(dirname "$0")"
 
-KID=43GN5VN77U
-ISS=9df5e017-3a86-4d06-ab78-0442c580ce42
-KEYPATH="$HOME/.appstoreconnect/private_keys/AuthKey_43GN5VN77U.p8"
+KID=353ZMTW2J9
+ISS=69a6de8a-c307-47e3-e053-5b8c7c11a4d1
+KEYPATH="$HOME/.appstoreconnect/private_keys/AuthKey_353ZMTW2J9.p8"
 
 jwt() {
   KID=$KID ISS=$ISS KEYPATH=$KEYPATH node /Users/kellyvohs/Projects/type/ios/scripts/asc-jwt.mjs
 }
 
-echo "waiting for the app record (bundle com.kellyvohs.type) to exist in ASC…"
+echo "waiting for the app record (bundle com.watchcapstudio.type) to exist in ASC…"
 for i in $(seq 1 240); do
   COUNT=$(curl -s -H "Authorization: Bearer $(jwt)" \
-    "https://api.appstoreconnect.apple.com/v1/apps?filter%5BbundleId%5D=com.kellyvohs.type" \
+    "https://api.appstoreconnect.apple.com/v1/apps?filter%5BbundleId%5D=com.watchcapstudio.type" \
     | python3 -c 'import json,sys; print(len(json.load(sys.stdin).get("data",[])))' 2>/dev/null)
   if [ "${COUNT:-0}" -ge 1 ]; then
     echo "app record found — uploading the build…"
