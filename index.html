@@ -166,9 +166,12 @@
   .line {
     min-height: calc(var(--type-size) * var(--space));
     white-space: pre-wrap;
-    /* never break inside a word — break-word was splitting "the" into "th"/"e"
-       and dangling a period onto its own line. Words wrap whole at spaces. */
-    overflow-wrap: normal;
+    /* words wrap whole at spaces; break-word is the margin backstop for a run
+       with no break opportunity (an unbroken keysmash, or non-breaking spaces
+       that slip in via paste / spell-check replacement). Normal spaced text
+       never mid-word-breaks under break-word — only a run too long for a
+       whole line does, which otherwise types off the page forever. */
+    overflow-wrap: break-word;
     word-break: normal;
   }
   /* the LIVE line uses the FULL line spacing too, so the whole sheet shares one
@@ -189,7 +192,7 @@
     margin: 0; border: 0; outline: none; resize: none; background: transparent;
     font-family: var(--mono); font-size: var(--type-size); line-height: var(--space);
     color: var(--ink); caret-color: var(--accent);   /* on-brand and visible in every theme */
-    white-space: pre-wrap; overflow-wrap: normal; word-break: normal;
+    white-space: pre-wrap; overflow-wrap: break-word; word-break: normal;
     overflow-y: auto; -webkit-overflow-scrolling: touch;
     z-index: 4;                               /* above the platen, below the hints bar (10) */
     -webkit-text-size-adjust: 100%;
@@ -266,7 +269,12 @@
     100% { transform: translateX(0); }
   }
 
-  .ch { display: inline-block; }
+  /* inline, not inline-block: inline-block boxes may break between ANY two
+     spans, which re-wrapped committed paragraphs mid-word ("windo / w") and
+     orphaned punctuation at line starts. Inline spans wrap like plain text —
+     whole words, at spaces. (The burn animates color/opacity only, so the
+     chars don't need their own boxes.) */
+  .ch { display: inline; }
   /* old-school overstrike — ↑ lifts the cursor onto a prior line and the char
      under it renders as a block; typing x covers it and advances right */
   .ch.overstrike { background: currentColor; color: var(--paper); border-radius: 1px; }
@@ -2005,6 +2013,9 @@
   const LINE_H_PX = () => (parseFloat(getComputedStyle(feed).fontSize) || 18) * (settings.lineSpace || 1.5);
   function computeCols() {
     const w = feed.parentElement.getBoundingClientRect().width;
+    // a hidden or mid-restore window can measure 0 — keep the last good
+    // estimate instead of clamping MAX_COLS to its floor until the next resize
+    if (!w) return;
     const fs = parseFloat(getComputedStyle(feed).fontSize) || 18;
     const charW = 0.6 * fs;                     // Courier advance width estimate
     // -2 char safety margin: Courier Prime renders slightly wider than the
@@ -2695,6 +2706,7 @@
   // focusing then would only pop the keyboard up and drop it again as the quote
   // takes the line non-editable. The quote/welcome's own end calls it true.
   function enterWriting(doFocus) {
+    computeCols();   // the window may have been 0-sized (or resized) since init
     renderActive();
     layout();
     // editable mode is a native textarea that owns its own focus/caret/scroll. Open
@@ -2730,7 +2742,9 @@
     el.addEventListener('input', () => {
       if (frozen || phase !== 'writing') return;
       if (quotePlaying && quoteSkip) quoteSkip();
-      current = el.innerText.replace(/​/g, '').replace(/\n+$/, '');
+      // nbsp -> space: non-breaking spaces (paste, spell-check replacement)
+      // give CSS no wrap opportunity, so the line runs off the page forever
+      current = el.innerText.replace(/​/g, '').replace(/\u00a0/g, ' ').replace(/\n+$/, '');
       markTyping(); nudgeHints(); resetSmolder(); persistDraft(); ensureClock(); updateMeter(); layout();
       positionEditCaret();
     });
@@ -2769,8 +2783,12 @@
       feed.appendChild(activeEl);
     }
     // assert the live-line identity even if another path (runIntro) made a bare
-    // div, and bind the native listeners exactly once
+    // div, and bind the native listeners exactly once. intro-line must never
+    // survive into writing — it is white-space:nowrap, and a nowrap live line
+    // types off the right edge forever (Chromium also inserts nbsp for spaces
+    // in a collapsing context, poisoning the committed text too).
     activeEl.classList.add('line', 'active-line');
+    if (phase !== 'intro') activeEl.classList.remove('intro-line');
     if (!activeEl.dataset.bound) {
       activeEl.dataset.bound = '1';
       activeEl.setAttribute('autocorrect', settings.autocorrect ? 'on' : 'off');   // off → no predictive bar (no emoji/word suggestions)
@@ -2790,8 +2808,11 @@
       activeEl.setAttribute('contenteditable', 'true');
       applyMdClass(activeEl, current);
       // set text only when it diverges (programmatic: commit-clear, restore,
-      // intro hand-off) — never clobber what the OS is rendering as you type
-      if ((activeEl.innerText || '').replace(/​/g, '') !== current) activeEl.textContent = current;
+      // intro hand-off) — never clobber what the OS is rendering as you type.
+      // compare with the same nbsp→space normalization the input sync applies,
+      // or a spell-check-inserted nbsp would read as divergence and reset the
+      // line (caret jump) mid-thought.
+      if ((activeEl.innerText || '').replace(/​/g, '').replace(/\u00a0/g, ' ') !== current) activeEl.textContent = current;
     }
   }
 
@@ -2806,26 +2827,34 @@
     // the roll-up and snap the page back under the stamp.
     if (feed.classList.contains('eject')) return;
     const lh = LINE_H_PX();
-    // the page stays put — overstriking moves only the block cursor across the
-    // committed lines that are already visible, never the page itself
-    let offset = 0;
+    // Roll by MEASURED height, not line count. A committed paragraph longer
+    // than the margin renders as several visual rows but is ONE locked line —
+    // counting lines under-rolled the platen by (rows - 1) per long paragraph,
+    // so the writing point crept toward the bottom of the window and every
+    // return landed the caret below the strike line. offsetTop is the true
+    // pixel height of everything above the element, whatever it wrapped to.
+    let baseY;
     if (cursor && settings.editable) {
       // editable page: roll the platen back so the line under the cursor
       // comes down to the strike point — the words come to you
-      offset = locked.length - cursor.line;
-    } else if (quoteHold) {
-      const d = locked.length - quoteHold.floor;    // lines you've committed since the quote
-      const H = QUOTE_HOLD_ROWS;
-      if (d <= H) offset = d;                       // hold: quote frozen, cursor descends
-      else if (d <= 2 * H) offset = 2 * H - d;      // catch up: roll back to the strike point
-      else { offset = 0; quoteHold = null; }        // done — ordinary centered writing
+      const target = feed.children[cursor.line];
+      baseY = target ? target.offsetTop : cursor.line * lh;
+    } else {
+      baseY = activeEl ? activeEl.offsetTop : locked.length * lh;
+      if (quoteHold) {
+        const d = locked.length - quoteHold.floor;  // lines you've committed since the quote
+        const H = QUOTE_HOLD_ROWS;
+        if (d <= H) baseY -= d * lh;                // hold: quote frozen, cursor descends
+        else if (d <= 2 * H) baseY -= (2 * H - d) * lh;  // catch up: roll back to the strike point
+        else quoteHold = null;                      // done — ordinary centered writing
+      }
     }
     // A long active line wraps DOWNWARD as you type; without this it would grow
     // past the strike point into the keyboard. Roll the platen by the caret's
     // pixel offset within the active line so the line you're on keeps riding the
     // strike point — the page moves up under you, like a carriage advancing.
     const extraPx = caretPixelOffset();
-    feed.style.transform = `translateY(${-(locked.length - offset) * lh - extraPx}px)`;
+    feed.style.transform = `translateY(${-baseY - extraPx}px)`;
     positionQuoteX();
   }
 
@@ -2898,8 +2927,9 @@
 
   function commitLine() {
     Activity.record('write');
-    // pull the latest text straight off the live native line
-    if (activeEl) current = activeEl.innerText.replace(/​/g, '').replace(/\n+$/, '');
+    // pull the latest text straight off the live native line (nbsp → space so
+    // the committed copy and saved markdown carry ordinary breakable spaces)
+    if (activeEl) current = activeEl.innerText.replace(/​/g, '').replace(/\u00a0/g, ' ').replace(/\n+$/, '');
     // freeze it into a static span-rendered line ABOVE the (persistent) active
     // line — spans so the burn-ash animation has chars to char; markdown styles
     // on commit (a "# "/"> "/"- " line snaps to its style here, not mid-typing)
@@ -3204,7 +3234,10 @@
   let feedbackPausedTimer = null;
 
   function enterFeedbackMode() {
-    if (feedbackMode || frozen) return;
+    // never during the intro: newSheet() below would sweep away the intro line
+    // (it has no active-line class yet) and strand the app with a detached
+    // live line — a dead page that takes no typing
+    if (feedbackMode || frozen || phase !== 'writing') return;
     if (quotePlaying && quoteSkip) quoteSkip();
     // editable: pull the note out of the native surface and tuck it away so it
     // doesn't overlay the feedback sheet (it's restored on exit)
@@ -3443,7 +3476,12 @@
   function readDraft() {
     try {
       const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
-      if (d && Array.isArray(d.locked) && typeof d.current === 'string') return d;
+      if (d && Array.isArray(d.locked) && typeof d.current === 'string') {
+        // drafts saved before the nbsp fix can carry non-breaking spaces
+        d.locked = d.locked.map((l) => String(l).replace(/\u00a0/g, ' '));
+        d.current = d.current.replace(/\u00a0/g, ' ');
+        return d;
+      }
     } catch (e) {}
     return null;
   }
@@ -3796,7 +3834,7 @@
   function pasteText(text) {
     if (!text || frozen || phase !== 'writing') return;
     if (quotePlaying && quoteSkip) quoteSkip();
-    text = text.replace(/\r\n?/g, '\n').replace(/\t/g, '  ');
+    text = text.replace(/\r\n?/g, '\n').replace(/\t/g, '  ').replace(/\u00a0/g, ' ');   // nbsp → space: pasted nbsp runs never wrap
     focusActiveEnd();
     // insert natively (keeps the OS undo stack); each newline commits a line
     const parts = text.split('\n');

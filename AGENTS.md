@@ -8,7 +8,7 @@ type is a single-window macOS writing app. One sheet of paper: you type, the
 lines roll up and can't be edited, then you keep it or burn it. Electron-
 wrapped web app, distributed as a signed + notarized universal .dmg.
 
-- **Repo:** github.com/kvohs/type
+- **Repo:** github.com/watchcapstudio/type
 - **Live download:** kellyvohs.com/type → redirects to GitHub /latest/
 - **Author:** Kelly Vohs
 
@@ -53,13 +53,13 @@ git tag vX.Y.Z
 git push origin main && git push origin vX.Y.Z
 
 # 4. wait for the workflow (builds, signs, notarizes, drafts release ~5-10 min)
-gh run watch -R kvohs/type
+gh run watch -R watchcapstudio/type
 
 # 5. publish the draft with the CHANGELOG body
 #    The CHANGELOG section IS the whole body. Don't append install steps or a
 #    signing / notarization / auto-update footer — that's plumbing, not notes.
 NOTES=$(awk '/^## v/{n++} n==1 && !/^## v/ && !/^---$/' CHANGELOG.md)   # body of newest section
-gh release edit vX.Y.Z -R kvohs/type \
+gh release edit vX.Y.Z -R watchcapstudio/type \
   --notes "$NOTES" --draft=false --latest
 ```
 
@@ -75,7 +75,7 @@ permanent redirect (`/type/download` → `releases/latest/download/...`).
 
 ## Signing + notarization
 
-Already wired. Repo secrets at github.com/kvohs/type/settings/secrets/actions:
+Already wired. Repo secrets at github.com/watchcapstudio/type/settings/secrets/actions:
 
 - `CSC_LINK` — base64 of the `.p12` (Developer ID Application cert + key)
 - `CSC_KEY_PASSWORD` — password for the .p12 (stored in 1Password under

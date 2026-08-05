@@ -6,6 +6,15 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.12.2
+
+### Fixed
+- **The line always turns at the margin.** Certain text — pasted from another app, or touched by a spell-check correction — carried invisible non-breaking spaces, and a line made of them would run off the right edge of the page forever instead of wrapping. Those spaces are now converted to ordinary ones as you write, and even a line with nowhere to break turns at the margin like a typewriter hitting the end of the carriage.
+- **Return puts you back on the writing line.** Pressing Return after a long paragraph used to land the cursor below the middle of the page, and each long paragraph pushed your writing further toward the bottom. The page now rolls by exactly the height of what you wrote, so the cursor comes back to the same writing line every time.
+- **Long paragraphs keep their words whole.** A paragraph that wrapped past the margin could re-break mid-word when it settled onto the page — "window" split into "windo" and "w", a quote mark stranded at the start of a line. Committed text now wraps at spaces, the same places it wrapped while you typed it.
+
+---
+
 ## v1.12.1
 
 ### Fixed
