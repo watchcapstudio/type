@@ -3,7 +3,7 @@ name: Release
 # Builds a signed + notarized universal macOS .dmg and attaches it to a draft
 # GitHub Release. Triggered when you push a vX.Y.Z tag, or manually from the
 # Actions tab. Requires these repo secrets: CSC_LINK (base64 .p12), CSC_KEY_PASSWORD,
-# APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID.
+# APPLE_TEAM_ID, APPLE_API_KEY (.p8 contents), APPLE_API_KEY_ID, APPLE_API_ISSUER.
 
 on:
   push:
@@ -39,14 +39,30 @@ jobs:
 
       - run: npm ci
 
+      # Notarization moved from an Apple ID plus app-specific password to an App
+      # Store Connect API key when the apps moved to the BTTY LLC team. The key
+      # belongs to the team rather than to a person, so it survives someone
+      # changing their Apple ID password, and there is no second credential to
+      # keep in sync. notarytool wants a file, so the secret is written to one.
+      - name: Provide the notarization key
+        env:
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        run: |
+          mkdir -p "$HOME/private_keys"
+          printf '%s\n' "$APPLE_API_KEY_CONTENT" > "$HOME/private_keys/AuthKey_$APPLE_API_KEY_ID.p8"
+          chmod 600 "$HOME/private_keys/AuthKey_$APPLE_API_KEY_ID.p8"
+
       - name: Build signed + notarized universal .dmg
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: npm run dist -- --publish never
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          export APPLE_API_KEY="$HOME/private_keys/AuthKey_$APPLE_API_KEY_ID.p8"
+          npm run dist -- --publish never
 
       - name: Show what was built
         run: ls -lh dist

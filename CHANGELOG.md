@@ -6,6 +6,17 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.13.0
+
+### Improved
+- **The typewriter font is in the app now.** Courier Prime was being fetched from Google every time type opened, so the one typeface the whole app is built around needed a working connection to show up, and offline you got whatever your Mac substituted. It ships inside type now. Nothing to load, nothing to wait for, and no request leaves your machine to draw a letter.
+- **Feedback goes to the studio.** Sending a note from inside type used to route through a separate service and land in a personal inbox. It now goes straight to WatchCap Studio.
+
+### Fixed
+- **type counts people, and remembers nobody.** type has always recorded only that someone wrote, never a word of what. But it used to attach a number that stayed the same forever, which meant the record could be followed around. It now sends something that changes every day, every week and every month, so the only question the data can answer is how many people wrote. Because there is nothing left to switch off, the Anonymous usage setting is gone.
+
+---
+
 ## v1.12.2
 
 ### Fixed

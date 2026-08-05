@@ -79,13 +79,21 @@ Already wired. Repo secrets at github.com/watchcapstudio/type/settings/secrets/a
 
 - `CSC_LINK` — base64 of the `.p12` (Developer ID Application cert + key)
 - `CSC_KEY_PASSWORD` — password for the .p12 (stored in 1Password under
-  "type .p12 password (Developer ID)" in the Watchcap vault)
-- `APPLE_ID` — Apple ID email for the developer account
-- `APPLE_APP_SPECIFIC_PASSWORD` — generated at appleid.apple.com
+  "APPSTORECONNECT APPLE - BTTY, LLC" in the Watchcap vault)
 - `APPLE_TEAM_ID` — `65TGBNLX53`
+- `APPLE_API_KEY` — contents of the `.p8` App Store Connect key
+- `APPLE_API_KEY_ID` — `353ZMTW2J9`
+- `APPLE_API_ISSUER` — the team issuer uuid
 
-Cert is good until **May 24, 2031**. No re-auth needed before then unless it's
-revoked or the .p12 password is lost.
+Notarization used to run on an Apple ID plus an app-specific password. It runs
+on the App Store Connect API key now: the key belongs to the team rather than
+to a person, so it survives someone changing their Apple ID password, and it is
+the same key the iOS release scripts already use. `APPLE_ID` and
+`APPLE_APP_SPECIFIC_PASSWORD` are no longer read by the workflow.
+
+The certificate expires **February 1, 2027**, which is short for a Developer ID
+cert and most likely mirrors the membership term. Creating a replacement is
+gated on the Account Holder (Joe), so do not discover this mid-release.
 
 **Important:** when regenerating the .p12, use `openssl pkcs12 -export -legacy …`.
 The `-legacy` flag matters — OpenSSL 3's default PKCS#12 encryption isn't
