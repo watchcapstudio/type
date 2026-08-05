@@ -54,10 +54,13 @@ jobs:
           chmod 600 "$HOME/private_keys/AuthKey_$APPLE_API_KEY_ID.p8"
 
       - name: Build signed + notarized universal .dmg
+        # Only the API key trio. Passing APPLE_TEAM_ID as well makes
+        # @electron/notarize see two credential sets and refuse with "Cannot use
+        # password credentials, API key credentials and keychain credentials at
+        # once". The signing identity comes from package.json, not from here.
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: |
