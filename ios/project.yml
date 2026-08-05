@@ -1,12 +1,12 @@
 name: type
 options:
-  bundleIdPrefix: com.kellyvohs
+  bundleIdPrefix: com.watchcapstudio
   deploymentTarget:
     iOS: "16.0"
   createIntermediateGroups: true
 settings:
   base:
-    DEVELOPMENT_TEAM: CAKM5U4VR2
+    DEVELOPMENT_TEAM: 65TGBNLX53
     SWIFT_VERSION: "5.9"
     MARKETING_VERSION: 1.12.0
     CURRENT_PROJECT_VERSION: 8
@@ -26,7 +26,7 @@ targets:
         buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.kellyvohs.type
+        PRODUCT_BUNDLE_IDENTIFIER: com.watchcapstudio.type
         INFOPLIST_FILE: type/Info.plist
         CODE_SIGN_ENTITLEMENTS: type/type.entitlements
         CODE_SIGN_STYLE: Automatic

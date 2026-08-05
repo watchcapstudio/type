@@ -317,14 +317,17 @@ struct TypeWebView: UIViewRepresentable {
             guard let root = webView?.window?.rootViewController else { resolveFeedback(ok: false, error: "no window"); return }
 
             let preview = body.count > 600 ? String(body.prefix(600)) + "\n…" : body
-            let alert = UIAlertController(title: "Send this feedback to Kelly?", message: preview, preferredStyle: .alert)
+            let alert = UIAlertController(title: "Send this to WatchCap Studio?", message: preview, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
                 self.resolveFeedback(ok: false, cancelled: true)
             })
             alert.addAction(UIAlertAction(title: "Send", style: .default) { _ in
-                var req = URLRequest(url: URL(string: "https://heycoop.ai/api/type-feedback")!)
+                var req = URLRequest(url: URL(string: "https://jrxwlskrlsmprxgrbxaf.supabase.co/functions/v1/type-feedback-ticket")!)
                 req.httpMethod = "POST"
                 req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                let fbKey = "sb_publishable_-gzsXHUa0VZTcp8_nyKDKw_nDjvKrW8"
+                req.setValue(fbKey, forHTTPHeaderField: "apikey")
+                req.setValue("Bearer " + fbKey, forHTTPHeaderField: "Authorization")
                 let version = (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? ""
                 var json: [String: Any] = ["body": body, "version": version + " (ios)"]
                 if let screenshot, screenshot.count <= 8_000_000 { json["screenshot"] = screenshot }

@@ -4,10 +4,26 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>type</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 <style>
+  /* Courier Prime ships with the app. It used to come from Google's CDN, which
+     meant the one font the whole app is built around needed a network round
+     trip to appear, and didn't appear at all offline. Same files, no request. */
+  @font-face {
+    font-family: "Courier Prime";
+    src: url("fonts/CourierPrime-Regular.ttf") format("truetype");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Courier Prime";
+    src: url("fonts/CourierPrime-Bold.ttf") format("truetype");
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Courier Prime";
+    src: url("fonts/CourierPrime-Italic.ttf") format("truetype");
+    font-weight: 400; font-style: italic; font-display: swap;
+  }
+
   :root {
     --paper: #ffffff;
     --ink: #121316;
@@ -1329,7 +1345,6 @@
       <button type="button" class="setgroup-head" aria-expanded="false">Saving<span class="chev"></span></button>
       <div class="setgroup-body">
         <label class="setrow" id="rowICloud" hidden><span>iCloud sync <span class="info" tabindex="0">i<span class="tip">Your writing syncs across your own devices through iCloud, and since type has no server, we never see your pages. Turn sync off to save somewhere else for now; turn it back on to return to your type folder.</span></span></span><input type="checkbox" id="setICloud" /><span class="sw"></span></label>
-        <label class="setrow" id="rowUsage"><span>Anonymous usage <span class="info" tabindex="0">i<span class="tip">Counts only that type was used (a page written, kept, burned, shared, or browsed), so we know people are writing. No account, no name, and never a word of what you write. Turn it off and type sends nothing.</span></span></span><input type="checkbox" id="setUsage" /><span class="sw"></span></label>
         <div class="setrow setrow-btn" id="rowSaveFolder" hidden>
           <span class="setval" id="saveFolderLabel">Downloads</span>
           <span class="setpick">choose…</span>
@@ -1449,7 +1464,7 @@
       setVersionEl.append(p);
     });
     setVersionEl.removeAttribute('aria-hidden');
-    whyBtn.addEventListener('click', () => { window.open('https://kellyvohs.com/type#why', '_blank', 'noopener'); });
+    whyBtn.addEventListener('click', () => { window.open('https://watchcapstudio.com/type#why', '_blank', 'noopener'); });
     // feedback wiring is bound later, once enterFeedbackMode is defined
   }
 
@@ -1499,18 +1514,24 @@
   })();
 
   /* ================= SETTINGS ================= */
-  const DEFAULTS = { dark: false, amber: false, dispatch: false, zen: false, onTop: false, editable: false, smolder: true, smolderSecs: 10, wordCount: false, pages: false, timer: false, sound: true, clicks: false, carriage: false, bell: false, haptics: true, autocorrect: false, quoteOpen: true, quoteBurn: true, saveDir: '', lineSpace: 1.5, onboarded: false, telemetry: true, groupsOpen: {} };
+  const DEFAULTS = { dark: false, amber: false, dispatch: false, zen: false, onTop: false, editable: false, smolder: true, smolderSecs: 10, wordCount: false, pages: false, timer: false, sound: true, clicks: false, carriage: false, bell: false, haptics: true, autocorrect: false, quoteOpen: true, quoteBurn: true, saveDir: '', lineSpace: 1.5, onboarded: false, groupsOpen: {} };
   let settings = Object.assign({}, DEFAULTS);
   try { Object.assign(settings, JSON.parse(localStorage.getItem('type.settings') || '{}')); } catch (e) {}
   settings.sound = true;   // no in-app master mute — the three sound toggles gate themselves; the OS handles silence
   const saveSettings = () => { try { localStorage.setItem('type.settings', JSON.stringify(settings)); } catch (e) {} };
 
-  // Activity — usage signal so we can tell if people actually use type, never
-  // what they write. Records THAT a verb happened (write, keep, burn, share,
-  // browse). type has no accounts, so the subject is a random per-install id,
-  // not tied to identity or any page. Off in dev (typeAPI.debug) and when the
-  // user turns it off in settings. Deduped per verb per local day. Posts to the
-  // shared Supabase usage_event log with the public anon key.
+  // Activity — how many people used type, and nothing else.
+  //
+  // It used to send a per-install uuid with every verb, which let the database
+  // reconstruct one install's whole history. That is more than the question
+  // needs. Now it sends sha256(install + period) once per period: a day hash, a
+  // week hash, a month hash. The three cannot be related to each other, and
+  // tomorrow's day hash cannot be related to today's, so counting rows is the
+  // only thing the data supports. No verb, no timestamp, no content, no id.
+  //
+  // The install uuid stays on the device as the hash seed and is never sent.
+  // Deliberate consequence: no retention, ever, and it cannot be added later
+  // from this data. Off in dev builds (typeAPI.debug).
   const Activity = (() => {
     const SUPABASE_URL = 'https://jrxwlskrlsmprxgrbxaf.supabase.co';
     // The publishable key, not the legacy anon JWT. Both are public by
@@ -1518,11 +1539,10 @@
     // with Dispatch's service_role key, which was exposed on 2026-07-29.
     // Revoking that one would have killed this too, in every shipped copy
     // of type. The new keys revoke independently. (Dispatch work board
-    // #121 — this app writes to that project's usage_event log.)
+    // #121 — this app writes to that project's usage_period log.)
     const ANON = 'sb_publishable_-gzsXHUa0VZTcp8_nyKDKw_nDjvKrW8';
     const T = (typeof window !== 'undefined' && window.typeAPI) || {};
     const platform = T.isIOS ? 'ios' : 'mac';
-    const sent = new Set();
     let install = null;
     function installId() {
       if (install) return install;
@@ -1532,22 +1552,53 @@
       } catch (e) { install = null; }
       return install;
     }
+    const pad = (n) => String(n).padStart(2, '0');
+    // ISO week, to match Postgres to_char(d,'IYYY')||'-W'||to_char(d,'IW').
+    // Thursday of the current week decides the year, which is the whole trick.
+    function isoWeekKey(d) {
+      const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+      const start = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+      const week = Math.ceil(((t - start) / 86400000 + 1) / 7);
+      return `${t.getUTCFullYear()}-W${pad(week)}`;
+    }
+    function periodKeys() {
+      const d = new Date();
+      return [
+        ['day',   `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`],
+        ['week',  isoWeekKey(d)],
+        ['month', `${d.getFullYear()}-${pad(d.getMonth() + 1)}`],
+      ];
+    }
+    async function sha256Hex(s) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+      return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+    }
     return {
-      record(action) {
+      // Called on any real verb. Which verb no longer matters: the question is
+      // "was this install active in this period", so the first one wins and the
+      // rest of the period is silent.
+      record() {
         try {
           if (T.debug) return;                         // dev build: never count
-          if (settings.telemetry === false) return;    // user opted out
           if (typeof fetch !== 'function') return;
+          if (!crypto || !crypto.subtle) return;       // no hash, no send
           const id = installId();
           if (!id) return;
-          const key = `${action}|${new Date().toDateString()}`;
-          if (sent.has(key)) return;
-          sent.add(key);
-          fetch(`${SUPABASE_URL}/rest/v1/rpc/record_event`, {
-            method: 'POST',
-            headers: { 'apikey': ANON, 'Authorization': `Bearer ${ANON}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ p_app: 'type', p_platform: platform, p_action: String(action), p_install: id }),
-          }).catch(() => {});
+          for (const [kind, key] of periodKeys()) {
+            const seen = `type.seen.${kind}`;
+            let already = null;
+            try { already = localStorage.getItem(seen); } catch (e) { already = null; }
+            if (already === key) continue;             // this period is already counted
+            try { localStorage.setItem(seen, key); } catch (e) { /* private mode: send anyway */ }
+            sha256Hex(`${id}|${key}`).then((hash) => {
+              fetch(`${SUPABASE_URL}/rest/v1/rpc/record_period`, {
+                method: 'POST',
+                headers: { 'apikey': ANON, 'Authorization': `Bearer ${ANON}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ p_app: 'type', p_platform: platform, p_kind: kind, p_key: key, p_hash: hash }),
+              }).catch(() => {});
+            }).catch(() => {});
+          }
         } catch (e) { /* never throw from telemetry */ }
       },
     };
@@ -1556,7 +1607,7 @@
   const applyTheme = () => {
     THEMES.forEach(t => document.body.classList.toggle(t, !!settings[t]));
   };
-  const boxes = { zen: document.getElementById('setZen'), onTop: document.getElementById('setOnTop'), editable: document.getElementById('setEditable'), smolder: document.getElementById('setSmolder'), wordCount: document.getElementById('setWordCount'), pages: document.getElementById('setPages'), timer: document.getElementById('setTimer'), clicks: document.getElementById('setClicks'), carriage: document.getElementById('setCarriage'), bell: document.getElementById('setBell'), haptics: document.getElementById('setHaptics'), autocorrect: document.getElementById('setAutocorrect'), quoteOpen: document.getElementById('setQuoteOpen'), quoteBurn: document.getElementById('setQuoteBurn'), telemetry: document.getElementById('setUsage') };
+  const boxes = { zen: document.getElementById('setZen'), onTop: document.getElementById('setOnTop'), editable: document.getElementById('setEditable'), smolder: document.getElementById('setSmolder'), wordCount: document.getElementById('setWordCount'), pages: document.getElementById('setPages'), timer: document.getElementById('setTimer'), clicks: document.getElementById('setClicks'), carriage: document.getElementById('setCarriage'), bell: document.getElementById('setBell'), haptics: document.getElementById('setHaptics'), autocorrect: document.getElementById('setAutocorrect'), quoteOpen: document.getElementById('setQuoteOpen'), quoteBurn: document.getElementById('setQuoteBurn') };
   Object.keys(boxes).forEach(k => {
     boxes[k].checked = !!settings[k];
     boxes[k].addEventListener('change', () => {

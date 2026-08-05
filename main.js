@@ -219,9 +219,13 @@ ipcMain.handle('type:share-note', async (_e, payload) => {
 // --- feedback ---
 // renderer hands us the feedback text. we show a native confirm dialog
 // (so the user can see exactly what's about to leave the machine), then
-// POST it to the Coop-hosted endpoint, which forwards via Resend.
-// the recipient address lives on the server, never in this binary.
-const FEEDBACK_ENDPOINT = 'https://heycoop.ai/api/type-feedback';
+// POST straight to our own edge function, which files a work-board card and
+// mails hello@watchcapstudio.com. This used to detour through Coop so no key
+// shipped in the binary; type now carries the publishable key anyway for usage
+// counting, and routing a WatchCap app's feedback through heycoop.ai was one
+// more thing to explain. The recipient still lives on the server, not here.
+const FEEDBACK_ENDPOINT = 'https://jrxwlskrlsmprxgrbxaf.supabase.co/functions/v1/type-feedback-ticket';
+const FEEDBACK_KEY = 'sb_publishable_-gzsXHUa0VZTcp8_nyKDKw_nDjvKrW8';
 
 ipcMain.handle('type:send-feedback', async (e, payload) => {
   try {
@@ -232,7 +236,7 @@ ipcMain.handle('type:send-feedback', async (e, payload) => {
     const preview = body.length > 600 ? body.slice(0, 600) + '\n…' : body;
     const confirm = await dialog.showMessageBox(win, {
       type: 'question',
-      title: 'Send this feedback to Kelly?',
+      title: 'Send this to WatchCap Studio?',
       message: 'Send this feedback?',
       detail: preview,
       buttons: ['Send', 'Cancel'],
@@ -243,7 +247,7 @@ ipcMain.handle('type:send-feedback', async (e, payload) => {
 
     const res = await fetch(FEEDBACK_ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'apikey': FEEDBACK_KEY, 'Authorization': `Bearer ${FEEDBACK_KEY}` },
       body: JSON.stringify({
         body,
         version: APP_VERSION,

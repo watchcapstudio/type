@@ -30,7 +30,7 @@
 	<true/>
 	<key>NSUbiquitousContainers</key>
 	<dict>
-		<key>iCloud.com.kellyvohs.type</key>
+		<key>iCloud.com.watchcapstudio.type</key>
 		<dict>
 			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
 			<true/>
