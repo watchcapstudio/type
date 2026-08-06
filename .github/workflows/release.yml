@@ -68,7 +68,11 @@ jobs:
           npm run dist -- --publish never
 
       - name: Show what was built
-        run: ls -lh dist
+        run: |
+          ls -lh dist
+          # Differential updates silently fall back to the full ZIP when this
+          # generated sidecar is missing from a release. Fail before drafting.
+          ls -lh dist/*.zip.blockmap
 
       - name: Attach the .dmg + auto-update manifest to a draft release
         uses: softprops/action-gh-release@v3
@@ -79,10 +83,13 @@ jobs:
           # latest-mac.yml = the auto-update manifest electron-updater reads
           # *.zip = the actual update artifact MacUpdater downloads (dmg can't
           # be used for in-place updates on macOS — needs to be a zip of the .app)
+          # *.zip.blockmap = the chunk map that lets MacUpdater fetch only the
+          # parts of the zip that changed instead of downloading it all
           # *.dmg = first-time downloads from kellyvohs.com/type
           files: |
             dist/*.dmg
             dist/*.zip
+            dist/*.zip.blockmap
             dist/latest-mac.yml
           body: |
             ## type ${{ steps.ref.outputs.tag }}
