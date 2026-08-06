@@ -6,6 +6,13 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.13.1
+
+### Fixed
+- **Future updates download only what changed.** Starting with this release, type publishes the map its updater needs to compare one version with the next. It no longer has to download the whole app whenever only a small part changed.
+
+---
+
 ## v1.13.0
 
 ### Improved
