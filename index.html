@@ -375,9 +375,9 @@
     transition: opacity .35s ease, color .15s ease;
   }
   body:not(.ios) .days-glyph:hover { color: var(--ink); }
-  /* the phone: same corner, same job, sized like the gear opposite it. No
-     gesture — on iOS a left-to-right swipe already dismisses the keyboard, and
-     the glyph is the honest way in anyway. */
+  /* the phone: same corner, same job, sized like the gear opposite it. The
+     left edge opens the rail too, mirroring settings on the right — but the
+     glyph is the visible way in, and the gesture is just a shortcut. */
   body.ios .days-glyph {
     position: fixed; z-index: 13;
     top: calc(8px + env(safe-area-inset-top, 0px)); left: 12px;
@@ -4465,16 +4465,30 @@
     // swipe IN from the right edge → slide out the settings rail (the way I keep
     // reaching for it). A leftward drag that starts in the right ~24px opens it;
     // an open rail closes on a rightward drag, a scrim tap, or the hamburger.
+    // Both edges open a rail: settings from the right, the days record from the
+    // left. The left edge is ours to take — the web view has back/forward
+    // gestures switched off, so iOS isn't listening there.
     let edgeStart = null;
     window.addEventListener('touchstart', (e) => {
       const t = e.touches[0];
-      edgeStart = (t.clientX >= window.innerWidth - 24) ? { x: t.clientX, y: t.clientY } : null;
+      if (t.clientX >= window.innerWidth - 24)  edgeStart = { x: t.clientX, y: t.clientY, from: 'right' };
+      else if (t.clientX <= 24)                 edgeStart = { x: t.clientX, y: t.clientY, from: 'left' };
+      else                                      edgeStart = null;
     }, { passive: true });
     window.addEventListener('touchmove', (e) => {
       if (!edgeStart) return;
       const t = e.touches[0];
       const dx = t.clientX - edgeStart.x, dy = Math.abs(t.clientY - edgeStart.y);
-      if (dx < -45 && dy < 40) { edgeStart = null; if (settingsEl.hidden) { settingsEl.hidden = false; hints.classList.remove('dim'); if (activeEl) activeEl.blur(); if (editSurface) editSurface.blur(); } }
+      if (edgeStart.from === 'right' && dx < -45 && dy < 40) {
+        edgeStart = null;
+        if (settingsEl.hidden) { settingsEl.hidden = false; hints.classList.remove('dim'); if (activeEl) activeEl.blur(); if (editSurface) editSurface.blur(); }
+      }
+      // pull the page right off the left edge → the days rail. openDays() blurs the
+      // writing surface itself, so the keyboard goes down as part of the same move.
+      if (edgeStart.from === 'left' && dx > 45 && dy < 40) {
+        edgeStart = null;
+        if (daysEl && daysEl.hidden) openDays();
+      }
     }, { passive: true });
     window.addEventListener('touchend', () => { edgeStart = null; }, { passive: true });
     // swipe right on the open rail to close it
