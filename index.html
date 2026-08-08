@@ -375,7 +375,19 @@
     transition: opacity .35s ease, color .15s ease;
   }
   body:not(.ios) .days-glyph:hover { color: var(--ink); }
-  body.ios .days-glyph { display: none; }   /* the phone gets its own way in later */
+  /* the phone: same corner, same job, sized like the gear opposite it. No
+     gesture — on iOS a left-to-right swipe already dismisses the keyboard, and
+     the glyph is the honest way in anyway. */
+  body.ios .days-glyph {
+    position: fixed; z-index: 13;
+    top: calc(8px + env(safe-area-inset-top, 0px)); left: 12px;
+    width: 40px; height: 40px; padding: 0; border: 0; background: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-faint); cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity .35s ease, color .15s ease;
+  }
+  body.ios .days-glyph:active { color: var(--ink); }
   .days-glyph[hidden] { display: none; }
 
   /* the rail: the mirror of settings. Same model — it sits UNDER the paper on the
@@ -404,6 +416,24 @@
   .days-grid .d.today.wrote { background: var(--accent); }
   .days-cell.blank .d { display: none; }
   .days-empty { font-size: 12px; line-height: 1.7; color: var(--ink-quiet); }
+
+  body.ios .days {
+    position: fixed; top: var(--vvt, 0px); left: 0; right: auto;
+    width: var(--rail); height: var(--vvh, 100vh);
+    padding: calc(env(safe-area-inset-top, 0px) + 28px) 16px calc(env(safe-area-inset-bottom, 0px) + 28px);
+    background: var(--panel); font-family: var(--mono);
+    overflow-y: auto; overscroll-behavior: contain;
+    z-index: 1;                       /* underneath the paper */
+  }
+  body.ios.days-open #stage {
+    transform: translateX(var(--rail));
+    border-radius: 26px 0 0 26px;     /* the rolled-back curve, mirrored */
+  }
+  body.ios.days-open .page-dim { background: rgba(0,0,0,0); pointer-events: auto; }   /* catches the tap to close */
+  body.ios.days-open .hints,
+  body.ios.days-open .prose-share,
+  body.ios.days-open .hint.ios-settings,
+  body.ios.days-open .days-glyph { opacity: 0; pointer-events: none; }
 
   /* the page slides right off the rail; the leading edge curves and casts a shadow */
   body.days-open:not(.ios) #stage {
@@ -1073,8 +1103,8 @@
     transition: opacity .35s ease; -webkit-tap-highlight-color: transparent;
     -webkit-app-region: no-drag;            /* stays clickable over the desktop drag region */
   }
-  body.ios .prose-share {                   /* iOS: hug the top-left corner */
-    top: calc(8px + env(safe-area-inset-top, 0px)); left: 12px; right: auto;
+  body.ios .prose-share {                   /* iOS: beside the gear, top-right */
+    top: calc(8px + env(safe-area-inset-top, 0px)); right: 60px; left: auto;
   }
   /* desktop settings opener: a hamburger in the top-right corner (mirrors iOS).
      Reuses the bottom-bar settings hint, lifted out into the corner. */
@@ -1391,7 +1421,7 @@
     <section class="setgroup" data-group="display">
       <button type="button" class="setgroup-head" aria-expanded="false">Display<span class="chev"></span></button>
       <div class="setgroup-body">
-        <label class="setrow" id="rowDays"><span>Days written <span class="info" tabindex="0">i<span class="tip">The dot grid in the top-left corner opens your writing days, a month at a time. Filled means you wrote that day — keeping and burning both count. Only the dates are stored, on this Mac, and nothing is sent anywhere.</span></span></span><input type="checkbox" id="setDays" /><span class="sw"></span></label>
+        <label class="setrow" id="rowDays"><span>Days written <span class="info" tabindex="0">i<span class="tip">The dot grid in the top-left corner opens your writing days, a month at a time. Filled means you wrote that day — keeping and burning both count. Only the dates are stored, on this device, and nothing is sent anywhere.</span></span></span><input type="checkbox" id="setDays" /><span class="sw"></span></label>
         <label class="setrow"><span>Word count</span><input type="checkbox" id="setWordCount" /><span class="sw"></span></label>
         <label class="setrow"><span>Pages</span><input type="checkbox" id="setPages" /><span class="sw"></span></label>
         <label class="setrow"><span>Timer</span><input type="checkbox" id="setTimer" /><span class="sw"></span></label>
@@ -1763,7 +1793,7 @@
   // the glyph only exists if the setting is on; closing the rail when it goes off
   function applyDays() {
     if (!daysGlyph) return;
-    daysGlyph.hidden = !settings.days || !!(window.typeAPI && window.typeAPI.isIOS);
+    daysGlyph.hidden = !settings.days;
     if (!settings.days && daysEl && !daysEl.hidden) daysEl.hidden = true;
     if (daysEl && !daysEl.hidden) renderRail();
   }
@@ -4410,9 +4440,14 @@
       // the keyboard away. Horizontal so it works in editable too.
       if (dx > 70 && Math.abs(dy) < 45) {
         swipeStart = null;
+        if (document.body.classList.contains('days-open')) return;   // the days rail closes the other way
         if (document.body.classList.contains('settings-open')) settingsEl.hidden = true;
         else dropKeyboard();
         return;
+      }
+      // the days rail lives on the left, so it shuts by pushing the page back left
+      if (dx < -70 && Math.abs(dy) < 45 && document.body.classList.contains('days-open')) {
+        swipeStart = null; closeDays(); return;
       }
       // swipe down dismisses the keyboard: a gentle pull on the locked page, or a
       // long deliberate pull in editable (where short swipes scroll the textarea).
