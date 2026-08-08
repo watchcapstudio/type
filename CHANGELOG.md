@@ -6,6 +6,13 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.14.0
+
+### New
+- **The days you've written, under the bottom bar.** A row of small dots, one for each of the last four weeks of days. A filled dot means you wrote that day — keeping and burning both count, since burning a page is still writing — and today wears a ring. There is no number, and nothing to break: it's a shape, not a score. The row fades with the rest of the bar the moment you start typing, and it grows from the first day you write, so it begins as a single dot rather than a month of empty ones. Turn it off under Display → Days written. To draw it, type now remembers the dates you wrote, which it never did before: dates only, on your Mac, and nothing about what you wrote.
+
+---
+
 ## v1.13.1
 
 ### Fixed
