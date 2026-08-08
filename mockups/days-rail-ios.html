@@ -1,0 +1,165 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<title>type — the days rail, iPhone</title>
+<style>
+  :root{
+    --paper:#ffffff; --ink:#121316; --ink-soft:#2c2d32; --ink-quiet:#7c7f86;
+    --ink-faint:#c2c4c9; --rule:#e5e6e9; --panel:#ffffff;
+    --accent:#df5a26; --mark:#df5a26;
+    --mono:"Courier Prime","Courier New",ui-monospace,monospace;
+    --rail:236px;                     /* min(62vw, 300px) on a 380pt phone */
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:#0d0e10; color:#e7e8ea; font-family:var(--mono);
+    padding:40px 20px 70px; display:flex; flex-direction:column; align-items:center; gap:16px}
+  .cap{font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#7e8189; text-align:center; max-width:680px; line-height:1.9}
+  .cap b{color:#c9ccd2; font-weight:700}
+  .cap .a{color:var(--accent)}
+  .note{font-size:12px; color:#83868e; max-width:620px; text-align:center; line-height:1.75; margin:0 0 24px}
+  .row3{display:flex; gap:40px; align-items:flex-start}
+  .stack{display:flex; flex-direction:column; align-items:center; gap:14px}
+  .label{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:#6c6f76}
+
+  /* phone shell */
+  .phone{position:relative; width:380px; height:780px; border-radius:46px; background:var(--paper);
+    overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.55), 0 0 0 11px #1c1d22, 0 0 0 13px #2a2c32}
+  .status{position:absolute; top:0; left:0; right:0; height:52px; z-index:60; display:flex;
+    align-items:center; justify-content:space-between; padding:18px 30px 0; font-size:13px; color:var(--ink-quiet)}
+  .status .r{display:flex; gap:6px; font-size:11px}
+  .home{position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:132px; height:5px;
+    border-radius:3px; background:var(--ink-faint); opacity:.55; z-index:70}
+
+  /* the rail, under the paper on the left */
+  .rail{position:absolute; top:0; bottom:0; left:0; width:var(--rail); z-index:1;
+    background:var(--panel); padding:70px 20px 40px 24px; overflow:hidden}
+  .rail-head{font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:20px}
+  .month{margin-bottom:22px}
+  .month-name{font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-quiet); margin-bottom:10px}
+  .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:9px 0; width:190px}
+  .cell{display:flex; align-items:center; justify-content:center; height:9px}
+  .d{width:6px; height:6px; border-radius:50%; background:transparent;
+     box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--ink-faint) 55%, transparent)}
+  .d.wrote{background:var(--ink-faint); box-shadow:none}
+  .d.today{box-shadow:0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--accent)}
+  .d.today.wrote{background:var(--accent)}
+  .cell.blank .d, .cell.future .d{display:none}
+
+  /* the page */
+  .page{position:absolute; inset:0; z-index:2; background:var(--paper); transition:none}
+  .page.open{transform:translateX(var(--rail)); border-radius:26px 0 0 26px;
+    box-shadow:-18px 0 40px -22px rgba(0,0,0,.45)}
+  .gear{position:absolute; top:60px; right:22px; color:var(--ink-faint); z-index:30}
+  .lines{position:absolute; top:210px; left:0; right:0; padding:0 34px; font-size:17px; line-height:2.05; color:var(--ink)}
+  .caret{display:inline-block; width:9px; height:18px; background:var(--ink); vertical-align:-3px}
+  /* idle bottom bar: just the pull-up bar. keep + burn live above the keyboard. */
+  .pull{position:absolute; bottom:44px; left:50%; transform:translateX(-50%); z-index:40;
+    width:40px; height:5px; border-radius:3px; background:var(--ink-faint); opacity:.7}
+
+  /* gesture */
+  .ges{position:absolute; top:52%; left:14px; z-index:55; display:flex; align-items:center; gap:8px;
+    color:var(--ink-faint); font-size:9px; letter-spacing:.18em; text-transform:uppercase}
+  .ges.on{left:calc(var(--rail) + 14px); color:var(--ink-faint)}
+  .thumb{width:26px; height:26px; border-radius:50%; box-shadow:inset 0 0 0 1.5px var(--ink-faint); flex:none}
+</style>
+</head>
+<body>
+
+<div class="cap"><b>the mirror of settings</b> &nbsp;settings opens from the right edge. the days rail opens from the left.<br>nothing lands in the bottom bar, so the phone's writing screen doesn't change at all.</div>
+
+<div class="row3">
+  <div class="stack">
+    <div class="phone">
+      <div class="rail">
+        <div class="rail-head">days written</div>
+        <div class="railMonths"></div>
+      </div>
+      <div class="page">
+        <div class="status"><span>9:41</span><span class="r">▮▮▮</span></div>
+        <div class="gear"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M10 12h10M14 17h6"/></svg></div>
+        <div class="lines"><span class="caret"></span></div>
+        <div class="pull"></div>
+        <div class="home"></div>
+      </div>
+      <div class="ges"><span class="thumb"></span>
+        <svg viewBox="0 0 30 12" width="26" height="12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M1 6h24"/><path d="M20 1.5L25 6l-5 4.5"/></svg>
+      </div>
+    </div>
+    <div class="label">before · unchanged</div>
+  </div>
+
+  <div class="stack">
+    <div class="phone">
+      <div class="rail">
+        <div class="rail-head">days written</div>
+        <div class="railMonths"></div>
+      </div>
+      <div class="page open">
+        <div class="status"><span>9:41</span><span class="r">▮▮▮</span></div>
+        <div class="lines"><span class="caret"></span></div>
+        <div class="pull"></div>
+        <div class="home"></div>
+      </div>
+    </div>
+    <div class="label">after · swipe right</div>
+  </div>
+</div>
+
+<p class="note">Same rail model as settings, same slide, same rounded leading edge. Tap the page or swipe back left to close. Calendar grid, Monday first: filled means you wrote, hollow means you didn't, today wears a ring, and days you haven't reached are blank rather than empty. It scrolls back as far as you have been writing, and it never shows a count.</p>
+
+<script>
+  const TODAY = new Date(2026, 7, 8);            // sat 08 aug 2026
+  const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const key = (d) => d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+  const wrote = new Set();
+  (function seed(){
+    for (let d = new Date(2026,3,6); d <= TODAY; d.setDate(d.getDate()+1)) {
+      let p = 0.78;
+      if (d.getDay() === 0) p = 0.35;            // sundays off, mostly
+      if (d.getMonth() === 5) p = 0.28;          // a thin june
+      if (d.getMonth() === 7) p = 0.85;
+      const h = (d.getFullYear()*372 + d.getMonth()*31 + d.getDate()) * 2654435761 % 1000 / 1000;
+      if (h < p) wrote.add(key(d));
+    }
+    wrote.delete(key(TODAY));                    // today not written yet: the ring shows empty
+  })();
+
+  function monthGrid(y, m) {
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    const lead = (new Date(y, m, 1).getDay() + 6) % 7;          // monday first
+    let len = new Date(y, m+1, 0).getDate();
+    // the current month stops at today — rendering the rest of it as empty cells
+    // left a month-sized hole in the rail, and read as a month of misses
+    if (y === TODAY.getFullYear() && m === TODAY.getMonth()) len = TODAY.getDate();
+    for (let i = 0; i < lead; i++) {
+      const c = document.createElement('div'); c.className = 'cell blank';
+      c.appendChild(document.createElement('span')); grid.appendChild(c);
+    }
+    for (let day = 1; day <= len; day++) {
+      const d = new Date(y, m, day);
+      const cell = document.createElement('div');
+      const dot = document.createElement('span'); dot.className = 'd';
+      if (d > TODAY) cell.className = 'cell future';
+      else {
+        cell.className = 'cell';
+        if (wrote.has(key(d))) dot.classList.add('wrote');
+        if (key(d) === key(TODAY)) dot.classList.add('today');
+      }
+      cell.appendChild(dot); grid.appendChild(cell);
+    }
+    return grid;
+  }
+
+  document.querySelectorAll('.railMonths').forEach((host) => {
+    [[2026,7],[2026,6],[2026,5],[2026,4]].forEach(([y,m]) => {
+      const wrap = document.createElement('div'); wrap.className = 'month';
+      const name = document.createElement('div'); name.className = 'month-name';
+      name.textContent = MONTHS[m] + ' ' + y;
+      wrap.appendChild(name); wrap.appendChild(monthGrid(y,m));
+      host.appendChild(wrap);
+    });
+  });
+</script>
+</body>
+</html>
