@@ -6,6 +6,14 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.15.1
+
+### Improved
+- **Your writing days read like the rest of the app.** Each month in the rail is now a titled section with the same spacing and weight as the panels in settings, instead of its own small-caps style.
+
+### Fixed
+- **The rail no longer fades out at the bottom.** The soft fade that sits at the foot of the page was still being drawn over the record, so the last month trailed off into nothing.
+
 ## v1.15.0
 
 ### Changed

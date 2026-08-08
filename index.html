@@ -400,9 +400,10 @@
     overflow-y: auto; overscroll-behavior: contain;
   }
   .days[hidden] { display: none; }
-  .days-title { font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 22px; }
-  .days-month { margin-bottom: 26px; }
-  .days-name { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-quiet); margin-bottom: 11px; }
+  /* a month reads exactly like a settings group: hairline, bold header, contents */
+  .days-month { border-top: 0.5px solid color-mix(in srgb, var(--rule) 70%, transparent); padding-top: 2px; margin-bottom: 18px; }
+  .days-name { padding: 10px 0 14px; font-size: 12.5px; font-weight: 700; letter-spacing: .02em; color: var(--ink); }
+  body.ios .days-name { padding: 13px 0 16px; font-size: 14px; }
   .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 9px 0; width: 100%; max-width: 238px; }
   .days-cell { display: flex; align-items: center; justify-content: center; height: 9px; }
   .days-grid .d {
@@ -415,7 +416,8 @@
   .days-grid .d.today { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--accent); }
   .days-grid .d.today.wrote { background: var(--accent); }
   .days-cell.blank .d { display: none; }
-  .days-empty { font-size: 12px; line-height: 1.7; color: var(--ink-quiet); }
+  .days-empty { padding-top: 12px; font-size: 12.5px; line-height: 1.7; color: var(--ink-quiet); }
+  body.ios .days-empty { font-size: 14px; }
 
   body.ios .days {
     position: fixed; top: var(--vvt, 0px); left: 0; right: auto;
@@ -428,6 +430,12 @@
   body.ios.days-open #stage {
     transform: translateX(var(--rail));
     border-radius: 26px 0 0 26px;     /* the rolled-back curve, mirrored */
+    /* and the seam mirrored with it: the paper's lit edge and the shadow it casts
+       are built for sliding LEFT, so sliding right needs both flipped or the edge
+       lands flat against the rail */
+    box-shadow:
+      inset 1px 0 0 rgba(255,255,255,0.07),
+      -18px 0 40px -22px rgba(0,0,0,0.55);
   }
   body.ios.days-open .page-dim { background: rgba(0,0,0,0); pointer-events: auto; }   /* catches the tap to close */
   body.ios.days-open .hints,
@@ -477,7 +485,8 @@
     background: linear-gradient(to top, var(--paper) 46%, transparent);
     pointer-events: none; z-index: 9; transition: opacity .3s ease;
   }
-  body.settings-open:not(.ios) .feather, body.reviewing .feather, body.feedback .feather { opacity: 0; }
+  body.settings-open:not(.ios) .feather, body.days-open:not(.ios) .feather,
+  body.reviewing .feather, body.feedback .feather { opacity: 0; }
 
   /* ---------- save: date stamp ---------- */
   .stamp {
@@ -1020,7 +1029,7 @@
   body.ios #stage {
     background: var(--paper);         /* opaque, so the rail stays hidden until revealed */
     z-index: 2;
-    transition: transform .32s cubic-bezier(.22,.61,.25,1), border-radius .32s ease;
+    transition: transform .32s cubic-bezier(.22,.61,.25,1), border-radius .32s ease, box-shadow .32s ease;
     /* the paper rides ABOVE the recessed rail and owns the seam, Dispatch-style:
        a bright lit leading edge + a soft shadow cast right into the rail. Only the
        right edge shows (off-screen until the paper slides left). */
@@ -1376,7 +1385,6 @@
     <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg>
   </button>
   <div class="days" id="days" hidden>
-    <div class="days-title">days written</div>
     <div id="daysBody"></div>
   </div>
 
@@ -1734,7 +1742,7 @@
     days.push(key);
     while (days.length > DAYS_MEMORY) days.shift();
     try { localStorage.setItem(DAYS_KEY, JSON.stringify(days)); } catch (e) {}
-    applyDays();
+  applyDays();
   }
   // one month as a calendar grid, monday first. The current month stops at today:
   // rendering the rest of it as empty cells left a month-sized hole and read as a
@@ -1761,7 +1769,7 @@
     }
     return grid;
   }
-  const MONTH_NAMES = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   function renderRail() {
     if (!daysBody) return;
     const all = readDays();
@@ -1816,6 +1824,28 @@
       if (!daysEl.hidden && !daysEl.contains(e.target) && !daysGlyph.contains(e.target)) closeDays();
     });
   }
+  // ---- TEMPORARY: demo history on Sunrise ----
+  // Fakes four months of writing days so the rail has something to show. Runs
+  // once, flags itself, and the next build wipes both the flag and the dates.
+  // REMOVE THIS BLOCK. It is not part of the app.
+  (function seedDemoDays() {
+    try {
+      if (localStorage.getItem('type.days.faked')) return;
+      const today = new Date(); today.setHours(12, 0, 0, 0);
+      const out = [];
+      for (let n = 118; n >= 1; n--) {
+        const d = new Date(today); d.setDate(today.getDate() - n);
+        const h = (d.getFullYear() * 372 + d.getMonth() * 31 + d.getDate()) * 2654435761 % 1000 / 1000;
+        const thin = new Date(today); thin.setMonth(today.getMonth() - 2);
+        let p = d.getDay() === 0 ? 0.35 : 0.8;
+        if (d.getMonth() === thin.getMonth()) p = 0.3;      // a thin month, so the shape isn't uniform
+        if (h < p) out.push(dayKey(d));
+      }
+      const merged = [...new Set([...out, ...readDays()])].sort();
+      localStorage.setItem(DAYS_KEY, JSON.stringify(merged));
+      localStorage.setItem('type.days.faked', '1');
+    } catch (e) {}
+  })();
   applyDays();
   // left open overnight, "today" is yesterday's dot — redraw when the window comes
   // back rather than running a clock
