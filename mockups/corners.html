@@ -1,0 +1,112 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<title>type — the two corners</title>
+<style>
+  :root{
+    --paper:#ffffff; --ink:#121316; --ink-soft:#2c2d32; --ink-quiet:#7c7f86;
+    --ink-faint:#c2c4c9; --rule:#e5e6e9; --accent:#df5a26;
+    --mono:"Courier Prime","Courier New",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:#0d0e10; color:#e7e8ea; font-family:var(--mono);
+    padding:40px 20px 60px; display:flex; flex-direction:column; align-items:center; gap:16px}
+  .cap{font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#7e8189; text-align:center; max-width:700px; line-height:1.9}
+  .cap b{color:#c9ccd2; font-weight:700}
+  .note{font-size:12px; color:#83868e; max-width:620px; text-align:center; line-height:1.75; margin:0 0 22px}
+
+  .win{position:relative; width:900px; height:420px; border-radius:11px; overflow:hidden;
+    background:var(--paper); box-shadow:0 30px 80px rgba(0,0,0,.55), 0 0 0 1px #26282e}
+  .titlebar{position:absolute; top:0; left:0; right:0; height:38px; display:flex; align-items:center; padding:0 14px; gap:8px; z-index:5}
+  .tl{width:11px; height:11px; border-radius:50%; background:#e0e1e4}
+  .corner{position:absolute; top:24px; color:var(--ink-faint); display:flex; align-items:center; gap:16px; z-index:6}
+  .corner.l{left:20px}
+  .corner.r{right:20px}
+  .lines{position:absolute; top:130px; left:0; right:0; display:flex; justify-content:center}
+  .lines div{width:min(520px,62%); font-size:17px; line-height:2.05; color:var(--ink)}
+  .caret{display:inline-block; width:9px; height:18px; background:var(--ink); vertical-align:-3px}
+  .hints{position:absolute; bottom:26px; left:0; right:0; display:flex; justify-content:center; align-items:center; gap:26px}
+  .hint{font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-faint)}
+  .sep{width:1px; height:12px; background:var(--ink-faint); opacity:.5}
+
+  .tag{position:absolute; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent)}
+  .tag.l{top:56px; left:22px}
+  .tag.r{top:56px; right:22px; text-align:right}
+
+  .strip{width:900px; display:flex; gap:14px}
+  .card{flex:1; background:var(--paper); border-radius:8px; padding:24px 22px 20px; box-shadow:0 0 0 1px #26282e;
+    display:flex; flex-direction:column; align-items:center; gap:16px}
+  .card h4{margin:0; align-self:flex-start; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-quiet); font-weight:400}
+  .glyphs{display:flex; align-items:center; gap:30px; color:var(--ink-faint); padding:6px 0}
+  .glyphs .on{color:var(--ink-soft)}
+  .why{margin:0; font-size:11.5px; line-height:1.7; color:var(--ink-quiet); text-align:center}
+  .pick{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="cap"><b>1 · blank page</b> &nbsp;one glyph a corner. the record on the left, settings on the right.<br>share isn't there, because there's nothing to share yet.</div>
+
+<div class="win">
+  <div class="titlebar"><span class="tl"></span><span class="tl"></span><span class="tl"></span></div>
+  <div class="corner l">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-label="days written"><circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg>
+  </div>
+  <div class="corner r">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M10 12h10M14 17h6"/></svg>
+  </div>
+  <div class="tag l">days</div>
+  <div class="tag r">settings</div>
+  <div class="lines"><div><span class="caret"></span></div></div>
+  <div class="hints"><span class="hint">keep</span><span class="sep"></span><span class="hint">kept</span><span class="sep"></span><span class="hint">burn</span></div>
+</div>
+
+<p class="note">Nothing under the bar any more. The dots only exist behind the left glyph.</p>
+
+<div class="cap"><b>2 · once there are words</b> &nbsp;share fades in beside settings, the way it fades in today.<br>the left corner never changes.</div>
+
+<div class="win">
+  <div class="titlebar"><span class="tl"></span><span class="tl"></span><span class="tl"></span></div>
+  <div class="corner l">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg>
+  </div>
+  <div class="corner r">
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M8.5 7.5L12 4L15.5 7.5"/><path d="M6 11.5V18A1.8 1.8 0 0 0 7.8 19.8H16.2A1.8 1.8 0 0 0 18 18V11.5"/></svg>
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M10 12h10M14 17h6"/></svg>
+  </div>
+  <div class="tag r">share · settings</div>
+  <div class="lines"><div>Reading hasn't always come easy to me,<br>if I'm being honest it still doesn't.<span class="caret"></span></div></div>
+  <div class="hints"><span class="hint">keep</span><span class="sep"></span><span class="hint">kept</span><span class="sep"></span><span class="hint">burn</span></div>
+</div>
+
+<div class="cap"><b>3 · the left glyph</b> &nbsp;three candidates, at real size.</div>
+
+<div class="strip">
+  <div class="card">
+    <h4>a · nine dots <span class="pick">← recommended</span></h4>
+    <div class="glyphs">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg>
+      <svg class="on" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg>
+    </div>
+    <p class="why">idle / hover. it is the thing it opens, shrunk. reads as a record, never as a chart.</p>
+  </div>
+  <div class="card">
+    <h4>b · a month</h4>
+    <div class="glyphs">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="5" cy="6" r="1.3"/><circle cx="10" cy="6" r="1.3"/><circle cx="15" cy="6" r="1.3"/><circle cx="20" cy="6" r="1.3"/><circle cx="5" cy="12" r="1.3"/><circle cx="10" cy="12" r="1.3"/><circle cx="15" cy="12" r="1.3"/><circle cx="20" cy="12" r="1.3"/><circle cx="5" cy="18" r="1.3"/><circle cx="10" cy="18" r="1.3"/><circle cx="15" cy="18" r="1.3"/><circle cx="20" cy="18" r="1.3"/></svg>
+      <svg class="on" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="5" cy="6" r="1.3"/><circle cx="10" cy="6" r="1.3"/><circle cx="15" cy="6" r="1.3"/><circle cx="20" cy="6" r="1.3"/><circle cx="5" cy="12" r="1.3"/><circle cx="10" cy="12" r="1.3"/><circle cx="15" cy="12" r="1.3"/><circle cx="20" cy="12" r="1.3"/><circle cx="5" cy="18" r="1.3"/><circle cx="10" cy="18" r="1.3"/><circle cx="15" cy="18" r="1.3"/><circle cx="20" cy="18" r="1.3"/></svg>
+    </div>
+    <p class="why">closer to a real month, but twelve dots at 20px starts to mush together on a non-retina screen.</p>
+  </div>
+  <div class="card">
+    <h4>c · a week</h4>
+    <div class="glyphs">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="4" cy="12" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="14" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+      <svg class="on" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="4" cy="12" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="14" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+    </div>
+    <p class="why">quietest of the three, but a single row of dots is the page-indicator shape. same trap as the bottom bar.</p>
+  </div>
+</div>
+
+</body>
+</html>

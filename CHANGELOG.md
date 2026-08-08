@@ -6,6 +6,13 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.15.0
+
+### Changed
+- **The days you've written moved off the page and into a rail.** Last release put a row of dots under the bottom bar; a fresh install showed a single dot floating there, which looked like a mistake rather than a record. The dots now live behind a small grid of nine dots in the top-left corner: click it and the page slides aside to show every month you've written, a dot a day, back to the first day you wrote. Still no number and nothing to break. Share moved to the top-right, next to settings, since the left corner belongs to the rail now.
+
+---
+
 ## v1.14.0
 
 ### New

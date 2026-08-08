@@ -361,32 +361,62 @@
   .hints.dim { opacity: 0; pointer-events: none; }
 
   /* ---------- days written ---------- */
-  /* A quiet record of the practice: one dot a day for the last four weeks,
-     sitting under the bottom bar. Solid = you wrote (kept or burned — burning
-     is still writing), hollow = you didn't, today wears a ring. Deliberately
-     no number: a count is a thing to protect, and the day you break it is the
-     day you stop opening the app. This is a shape, not a score.
-     It belongs to the bar, so it lives and dies with it — the ~ rules below
-     mean every state that hides the words hides the dots, typing included. */
-  .practice {
-    position: fixed; bottom: 13px; left: 0; right: 0;
-    display: flex; justify-content: center; align-items: center;
-    z-index: 10; pointer-events: none;
-    transition: opacity .7s ease;
+  /* The record of the practice: a dot a day, kept behind a glyph in the top-left
+     corner rather than sitting on the page. Deliberately not a streak — a count
+     is a thing to protect, and the day you break it is the day you stop opening
+     the app. Dots only, no totals, ever.
+     The glyph is the thing it opens, shrunk: nine dots. */
+  body:not(.ios) .days-glyph {
+    position: fixed; z-index: 13; top: 14px; left: 88px;   /* clear of the traffic lights */
+    width: 40px; height: 40px; padding: 0; border: 0; background: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-faint); cursor: pointer;
+    -webkit-app-region: no-drag;
+    transition: opacity .35s ease, color .15s ease;
   }
-  .practice[hidden] { display: none; }
-  .practice .d {
-    width: 5px; height: 5px; margin: 0 2.5px; border-radius: 50%;
-    background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-faint) 55%, transparent);
+  body:not(.ios) .days-glyph:hover { color: var(--ink); }
+  body.ios .days-glyph { display: none; }   /* the phone gets its own way in later */
+  .days-glyph[hidden] { display: none; }
+
+  /* the rail: the mirror of settings. Same model — it sits UNDER the paper on the
+     left, and opening slides the page right to reveal it. */
+  body:not(.ios) .days {
+    position: fixed; top: 0; left: 0; z-index: 1;
+    width: calc(var(--rail) + 40px); height: 100vh;        /* +40 tucks under the paper, no gap */
+    padding: 44px 62px 26px 22px;                          /* mirror of the settings rail's padding */
+    background: var(--panel); font-family: var(--mono);
+    overflow-y: auto; overscroll-behavior: contain;
   }
-  .practice .d.wrote { background: var(--ink-faint); box-shadow: none; }
-  /* today gets a ring, not just a hue — in amber the accent sits close enough
-     to the ink that color alone wouldn't carry it */
-  .practice .d.today { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--accent); }
-  .practice .d.today.wrote { background: var(--accent); }   /* the ring says "today"; the fill says "and you wrote" */
-  .practice .wk { width: 6px; }        /* a breath between weeks */
-  .hints.dim ~ .practice { opacity: 0; }
-  body.ios .practice { display: none; }   /* desktop only for now — the phone's bottom bar is a different animal */
+  .days[hidden] { display: none; }
+  .days-title { font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 22px; }
+  .days-month { margin-bottom: 26px; }
+  .days-name { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-quiet); margin-bottom: 11px; }
+  .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 9px 0; width: 100%; max-width: 238px; }
+  .days-cell { display: flex; align-items: center; justify-content: center; height: 9px; }
+  .days-grid .d {
+    width: 6px; height: 6px; border-radius: 50%; background: transparent;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-faint) 55%, transparent);
+  }
+  .days-grid .d.wrote { background: var(--ink-faint); box-shadow: none; }
+  /* today gets a ring, not just a hue — in amber the accent sits close enough to
+     the ink that color alone wouldn't carry it */
+  .days-grid .d.today { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--accent); }
+  .days-grid .d.today.wrote { background: var(--accent); }
+  .days-cell.blank .d { display: none; }
+  .days-empty { font-size: 12px; line-height: 1.7; color: var(--ink-quiet); }
+
+  /* the page slides right off the rail; the leading edge curves and casts a shadow */
+  body.days-open:not(.ios) #stage {
+    transform: translateX(var(--rail));
+    border-radius: 26px 0 0 26px;
+    box-shadow: -18px 0 40px -22px rgba(0,0,0,0.40);
+  }
+  body.days-open:not(.ios) .settings-scrim { left: var(--rail); right: 0; pointer-events: auto; }
+  /* the chrome bows out while the rail is open */
+  body.days-open:not(.ios) .hints,
+  body.days-open:not(.ios) .prose-share,
+  body.days-open:not(.ios) .corner-settings,
+  body.days-open:not(.ios) .days-glyph { opacity: 0; pointer-events: none; }
   .hint { display: inline-flex; align-items: baseline; gap: 9px; }
   .hint .k { font-weight: 700; font-size: 11px; letter-spacing: .22em; color: var(--ink-quiet); }
   .hint .l { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-faint); }
@@ -1008,7 +1038,6 @@
   /* clean reveal: the bottom hints bow out while the rail is open (close by
      clicking the page, ⌘, or Esc) */
   body.settings-open:not(.ios) .hints,
-  body.settings-open:not(.ios) .practice,
   body.settings-open:not(.ios) .prose-share { opacity: 0; pointer-events: none; }
   /* the scrim no longer washes the screen — it only covers the page (left of the
      rail) and catches the click-to-close; the paper's shadow says "on top" */
@@ -1032,12 +1061,12 @@
     -webkit-tap-highlight-color: transparent;
   }
   body.ios .hint.ios-settings:active { color: var(--ink); }
-  /* share glyph — top-left, mirroring the settings hamburger top-right; only
-     once there's prose to share. (Desktop sits it just right of the traffic
-     lights; iOS hugs the corner.) */
+  /* share glyph — top-RIGHT on desktop, just left of the settings hamburger; the
+     left corner belongs to the days rail now. Only once there's prose to share.
+     (iOS still hugs the top-left corner, where there's no days glyph.) */
   .prose-share {
     position: fixed; z-index: 13;
-    top: 14px; left: 88px; right: auto;     /* desktop: top-left, clear of the traffic lights */
+    top: 14px; right: 58px; left: auto;      /* desktop: beside the settings hamburger */
     width: 40px; height: 40px;
     display: inline-flex; align-items: center; justify-content: center;
     color: var(--ink-faint); opacity: 0; pointer-events: none; cursor: pointer;   /* match the KEEP button */
@@ -1062,6 +1091,8 @@
   body.has-prose .prose-share { opacity: 1; pointer-events: auto; }
   .prose-share:hover, .prose-share:active { color: var(--ink); }
   body.reviewing .prose-share, body.feedback .prose-share { opacity: 0 !important; pointer-events: none; }
+  body.reviewing:not(.ios) .days-glyph, body.feedback .days-glyph { opacity: 0; pointer-events: none; }
+  body.typing .days-glyph { opacity: 0; pointer-events: none; }   /* clean screen while the words flow */
   /* clean screen while typing — the corner glyphs (share / settings) fade out and
      come back the moment you pause */
   body.ios .hint.ios-settings { transition: opacity .35s ease, color .15s ease; }
@@ -1120,9 +1151,7 @@
   body.reviewing .kept-scrim { background: rgba(0,0,0,.28); pointer-events: auto; }
   /* the writing-screen corner controls bow out while the drawer is up */
   body.reviewing .ios-kept-entry, body.reviewing .hint.ios-settings { opacity: 0; pointer-events: none; }
-  body.reviewing:not(.ios) .hints,
-  body.reviewing:not(.ios) .practice { opacity: 0; pointer-events: none; }   /* bottom bar bows out while browsing kept */
-  body.feedback .practice { opacity: 0; }   /* the report sheet borrows the bar; the dots step back too */
+  body.reviewing:not(.ios) .hints { opacity: 0; pointer-events: none; }   /* bottom bar bows out while browsing kept */
   @media (prefers-reduced-motion: reduce) {
     .kept-screen { transition: transform .25s ease; }
   }
@@ -1308,11 +1337,18 @@
       <span class="hint hint-btn" id="hintCancel"><span class="k">esc</span><span class="l">cancel</span></span>
     </span>
   </div>
-  <!-- days written — must stay a following sibling of .hints; the ~ rule is what
-       makes it fade with the bar -->
-  <div class="practice" id="practice" aria-hidden="true" hidden></div>
+
 
   <div class="update" id="update" aria-live="polite"><div class="update-bar"><i></i></div><div class="update-text"></div></div>
+
+  <!-- days written: a nine-dot glyph top-left, and the rail it opens -->
+  <button type="button" class="days-glyph" id="daysGlyph" aria-label="days written" hidden>
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg>
+  </button>
+  <div class="days" id="days" hidden>
+    <div class="days-title">days written</div>
+    <div id="daysBody"></div>
+  </div>
 
   <div class="settings-scrim" id="settingsScrim" aria-hidden="true"></div>
   <div class="settings" id="settings" hidden>
@@ -1355,7 +1391,7 @@
     <section class="setgroup" data-group="display">
       <button type="button" class="setgroup-head" aria-expanded="false">Display<span class="chev"></span></button>
       <div class="setgroup-body">
-        <label class="setrow" id="rowDays"><span>Days written <span class="info" tabindex="0">i<span class="tip">A dot a day for the last four weeks, under the bottom bar. Filled means you wrote that day — keeping and burning both count. Only the dates are stored, on this Mac, and nothing is sent anywhere.</span></span></span><input type="checkbox" id="setDays" /><span class="sw"></span></label>
+        <label class="setrow" id="rowDays"><span>Days written <span class="info" tabindex="0">i<span class="tip">The dot grid in the top-left corner opens your writing days, a month at a time. Filled means you wrote that day — keeping and burning both count. Only the dates are stored, on this Mac, and nothing is sent anywhere.</span></span></span><input type="checkbox" id="setDays" /><span class="sw"></span></label>
         <label class="setrow"><span>Word count</span><input type="checkbox" id="setWordCount" /><span class="sw"></span></label>
         <label class="setrow"><span>Pages</span><input type="checkbox" id="setPages" /><span class="sw"></span></label>
         <label class="setrow"><span>Timer</span><input type="checkbox" id="setTimer" /><span class="sw"></span></label>
@@ -1649,16 +1685,17 @@
   // Kept and burned both mark the day. The row answers "did you write", not
   // "did you file it" — burning a page is the app working as intended.
   const DAYS_KEY = 'type.days';
-  const DAYS_SHOWN = 28;                 // four weeks: long enough to show a rhythm, short enough to stay a whisper
-  const DAYS_MEMORY = 400;               // a bit over a year, so the row survives a long gap
-  const practiceEl = document.getElementById('practice');
+  const DAYS_MEMORY = 400;               // a bit over a year, so the rail survives a long gap
+  const daysGlyph = document.getElementById('daysGlyph');
+  const daysEl    = document.getElementById('days');
+  const daysBody  = document.getElementById('daysBody');
   const two = (n) => String(n).padStart(2, '0');
   const dayKey = (d) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
   function readDays() {
     try { const v = JSON.parse(localStorage.getItem(DAYS_KEY) || '[]'); return Array.isArray(v) ? v : []; }
     catch (e) { return []; }
   }
-  // called on every commit / keep / burn — cheap and idempotent for the day
+  // called on every commit / keep / burn — cheap, and a no-op once today is marked
   function markToday() {
     const key = dayKey(new Date());
     const days = readDays();
@@ -1667,42 +1704,92 @@
     days.push(key);
     while (days.length > DAYS_MEMORY) days.shift();
     try { localStorage.setItem(DAYS_KEY, JSON.stringify(days)); } catch (e) {}
-    renderDays();
+    applyDays();
   }
-  function renderDays() {
-    if (!practiceEl) return;
-    practiceEl.hidden = !settings.days;
-    if (!settings.days) { practiceEl.replaceChildren(); return; }
+  // one month as a calendar grid, monday first. The current month stops at today:
+  // rendering the rest of it as empty cells left a month-sized hole and read as a
+  // month of misses. The future isn't a miss.
+  function monthGrid(year, month, wrote, today) {
+    const grid = document.createElement('div');
+    grid.className = 'days-grid';
+    const lead = (new Date(year, month, 1).getDay() + 6) % 7;
+    let len = new Date(year, month + 1, 0).getDate();
+    if (year === today.getFullYear() && month === today.getMonth()) len = today.getDate();
+    for (let i = 0; i < lead; i++) {
+      const c = document.createElement('div'); c.className = 'days-cell blank';
+      c.appendChild(document.createElement('span'));
+      grid.appendChild(c);
+    }
+    for (let day = 1; day <= len; day++) {
+      const d = new Date(year, month, day);
+      const cell = document.createElement('div'); cell.className = 'days-cell';
+      const dot = document.createElement('span');
+      dot.className = 'd' + (wrote.has(dayKey(d)) ? ' wrote' : '') + (dayKey(d) === dayKey(today) ? ' today' : '');
+      dot.title = d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
+      cell.appendChild(dot);
+      grid.appendChild(cell);
+    }
+    return grid;
+  }
+  const MONTH_NAMES = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  function renderRail() {
+    if (!daysBody) return;
     const all = readDays();
-    const days = new Set(all);
+    const wrote = new Set(all);
     const today = new Date();
     today.setHours(12, 0, 0, 0);                    // noon, so a DST jump can't shift a day
-    // The row GROWS. A fixed 28 slots would greet a new writer with 27 empty
-    // days, which reads as 27 failures before they've typed a word. So it runs
-    // from the first day you ever wrote up to today, and only once you have four
-    // weeks behind you does it settle into a moving four-week window.
-    const first = all.length ? new Date(all[0] + 'T12:00:00') : today;
-    const span = Math.min(DAYS_SHOWN, Math.max(1, Math.round((today - first) / 86400000) + 1));
     const frag = document.createDocumentFragment();
-    for (let i = span - 1; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const dot = document.createElement('span');
-      dot.className = 'd' + (days.has(dayKey(d)) ? ' wrote' : '') + (i === 0 ? ' today' : '');
-      dot.title = d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
-      frag.appendChild(dot);
-      if (i !== 0 && i % 7 === 0) {                 // a gap every seventh day, so the eye can count weeks
-        const gap = document.createElement('span');
-        gap.className = 'wk';
-        frag.appendChild(gap);
+    if (!all.length) {
+      const p = document.createElement('p');
+      p.className = 'days-empty';
+      p.textContent = 'Nothing here yet. Write a page and today gets its dot.';
+      frag.appendChild(p);
+    } else {
+      // this month at the top, back to the month you first wrote in
+      const first = new Date(all[0] + 'T12:00:00');
+      let y = today.getFullYear(), m = today.getMonth();
+      while (y > first.getFullYear() || (y === first.getFullYear() && m >= first.getMonth())) {
+        const wrap = document.createElement('div'); wrap.className = 'days-month';
+        const name = document.createElement('div'); name.className = 'days-name';
+        name.textContent = MONTH_NAMES[m] + ' ' + y;
+        wrap.appendChild(name);
+        wrap.appendChild(monthGrid(y, m, wrote, today));
+        frag.appendChild(wrap);
+        if (--m < 0) { m = 11; y--; }
       }
     }
-    practiceEl.replaceChildren(frag);
+    daysBody.replaceChildren(frag);
   }
-  renderDays();
-  // left open overnight, "today" is yesterday's dot — redraw when the window
-  // comes back rather than running a clock
-  window.addEventListener('focus', renderDays);
+  // the glyph only exists if the setting is on; closing the rail when it goes off
+  function applyDays() {
+    if (!daysGlyph) return;
+    daysGlyph.hidden = !settings.days || !!(window.typeAPI && window.typeAPI.isIOS);
+    if (!settings.days && daysEl && !daysEl.hidden) daysEl.hidden = true;
+    if (daysEl && !daysEl.hidden) renderRail();
+  }
+  function openDays() {
+    if (!daysEl || !settings.days) return;
+    if (!settingsEl.hidden) settingsEl.hidden = true;      // one rail at a time
+    renderRail();
+    daysEl.hidden = false;
+    if (activeEl) activeEl.blur();
+    if (editSurface) editSurface.blur();
+  }
+  const closeDays = () => { if (daysEl) daysEl.hidden = true; };
+  if (daysGlyph) daysGlyph.addEventListener('click', () => { daysEl.hidden ? openDays() : closeDays(); });
+  // body.days-open drives the page slide + scrim; observing `hidden` catches every
+  // open/close path, the same way settings does
+  if (daysEl) {
+    new MutationObserver(() => document.body.classList.toggle('days-open', !daysEl.hidden))
+      .observe(daysEl, { attributes: true, attributeFilter: ['hidden'] });
+    document.addEventListener('mousedown', (e) => {
+      if (!daysEl.hidden && !daysEl.contains(e.target) && !daysGlyph.contains(e.target)) closeDays();
+    });
+  }
+  applyDays();
+  // left open overnight, "today" is yesterday's dot — redraw when the window comes
+  // back rather than running a clock
+  window.addEventListener('focus', applyDays);
 
   const THEMES = ['dark', 'amber', 'dispatch'];
   const applyTheme = () => {
@@ -1720,7 +1807,7 @@
       if (k === 'zen')   applyZen();
       if (k === 'onTop') applyOnTop();
       if (k === 'smolder') { if (settings.smolder) scheduleSmolder(); else coolSmolder(); updateBurnAfter(); }
-      if (k === 'days') renderDays();
+      if (k === 'days') applyDays();
       if (k === 'wordCount' || k === 'pages' || k === 'timer') updateMeter();
       if (k === 'autocorrect') applyAutocorrect();
       if (k === 'editable') { applyEditable(); syncEditableSurface(); positionEditCaret(); }
@@ -1900,6 +1987,7 @@
     editSurface.setAttribute('spellcheck', settings.autocorrect ? 'true' : 'false');
   }
   const toggleSettings = () => {
+    if (daysEl && !daysEl.hidden) daysEl.hidden = true;   // one rail at a time
     settingsEl.hidden = !settingsEl.hidden;
     if (!settingsEl.hidden) { hints.classList.remove('dim'); if (activeEl) activeEl.blur(); if (editSurface) editSurface.blur(); }
   };
@@ -4035,6 +4123,7 @@
     if (!mod && e.key.length === 1) hideCursor();      // any printable keystroke tucks the pointer away
 
     if (e.key === 'Escape') {
+      if (daysEl && !daysEl.hidden) { e.preventDefault(); closeDays(); return; }
       if (!settingsEl.hidden) { e.preventDefault(); settingsEl.hidden = true; return; }
       if (feedbackMode) { e.preventDefault(); exitFeedbackMode(false); return; }
       if (cursor) { e.preventDefault(); exitOverstrike(); return; }
