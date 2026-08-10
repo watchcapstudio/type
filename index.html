@@ -367,7 +367,7 @@
      the app. Dots only, no totals, ever.
      The glyph is the thing it opens, shrunk: nine dots. */
   body:not(.ios) .days-glyph {
-    position: fixed; z-index: 13; top: 14px; left: 88px;   /* clear of the traffic lights */
+    position: fixed; z-index: 13; bottom: 16px; left: 24px;   /* bottom-left, inline with the keep/burn row */
     width: 40px; height: 40px; padding: 0; border: 0; background: none;
     display: inline-flex; align-items: center; justify-content: center;
     color: var(--ink-faint); cursor: pointer;
@@ -1118,7 +1118,7 @@
   /* desktop settings opener: a hamburger in the top-right corner (mirrors iOS).
      Reuses the bottom-bar settings hint, lifted out into the corner. */
   body:not(.ios) .corner-settings {
-    position: fixed; z-index: 13; top: 14px; right: 16px;
+    position: fixed; z-index: 13; bottom: 16px; right: 24px;
     width: 40px; height: 40px; padding: 0;
     display: inline-flex; align-items: center; justify-content: center;
     color: var(--ink-faint); cursor: pointer;
@@ -1136,6 +1136,15 @@
      come back the moment you pause */
   body.ios .hint.ios-settings { transition: opacity .35s ease, color .15s ease; }
   body.typing .prose-share, body.typing .hint.ios-settings { opacity: 0 !important; pointer-events: none; }
+  /* the top corner glyphs (days top-left, settings top-right) don't appear at
+     launch — they wait for the bottom bar's first reveal and fade in on its
+     timing, so nothing arrives ahead of the hints. */
+  body.chrome-hold .days-glyph,
+  body.chrome-hold:not(.ios) .corner-settings,
+  body.ios.chrome-hold .hint.ios-settings { opacity: 0 !important; pointer-events: none !important; transition: none !important; }
+  body.chrome-reveal .days-glyph,
+  body.chrome-reveal:not(.ios) .corner-settings,
+  body.ios.chrome-reveal .hint.ios-settings { transition: opacity .7s ease !important; }
   /* the visible way in: a quiet "kept" in the top-left, mirroring settings
      top-right. Bows out while the keyboard's up so writing stays clean. */
   body.ios .ios-kept-entry {
@@ -1340,7 +1349,7 @@
 
 </style>
 </head>
-<body>
+<body class="chrome-hold">
   <div class="window-drag" aria-hidden="true"></div>
   <div class="stage" id="stage">
     <div class="platen">
@@ -1525,6 +1534,18 @@
   const editSurface = document.getElementById('editSurface');
   const introEl = document.getElementById('intro');
   const hints   = document.getElementById('hints');
+  // The top corner glyphs hold hidden until the bottom bar first un-dims, then
+  // fade in on its timing (.7s). One-shot: after the first reveal they follow
+  // the normal typing/pause behavior. Observing #hints covers every path that
+  // brings the controls in (intro end, skip, restored draft, settings).
+  const revealChrome = () => {
+    if (!document.body.classList.contains('chrome-hold')) return;
+    document.body.classList.add('chrome-reveal');
+    document.body.classList.remove('chrome-hold');
+    setTimeout(() => document.body.classList.remove('chrome-reveal'), 760);
+  };
+  new MutationObserver(() => { if (!hints.classList.contains('dim')) revealChrome(); })
+    .observe(hints, { attributes: true, attributeFilter: ['class'] });
   const stampEl = document.getElementById('stamp');
   const stampDate = document.getElementById('stampDate');
   const stampKept = document.getElementById('stampKept');
@@ -1824,29 +1845,31 @@
       if (!daysEl.hidden && !daysEl.contains(e.target) && !daysGlyph.contains(e.target)) closeDays();
     });
   }
-  // ---- TEMPORARY: demo history on Sunrise ----
-  // Fakes four months of writing days so the rail has something to show. Runs
-  // once, flags itself, and the next build wipes both the flag and the dates.
-  // REMOVE THIS BLOCK. It is not part of the app.
-  (function seedDemoDays() {
+  applyDays();
+  // One-time cleanup. 1.15.0/1.15.1 shipped a demo seed that faked months of
+  // writing days into the rail. Rebuild the record from the real kept notes
+  // (the only trustworthy source of days actually written) and drop the flag so
+  // it can never run again. Runs once per seeded install, native only; a fresh
+  // install has no flag and skips it.
+  (async function unseedDemoDays() {
     try {
-      if (localStorage.getItem('type.days.faked')) return;
-      const today = new Date(); today.setHours(12, 0, 0, 0);
-      const out = [];
-      for (let n = 118; n >= 1; n--) {
-        const d = new Date(today); d.setDate(today.getDate() - n);
-        const h = (d.getFullYear() * 372 + d.getMonth() * 31 + d.getDate()) * 2654435761 % 1000 / 1000;
-        const thin = new Date(today); thin.setMonth(today.getMonth() - 2);
-        let p = d.getDay() === 0 ? 0.35 : 0.8;
-        if (d.getMonth() === thin.getMonth()) p = 0.3;      // a thin month, so the shape isn't uniform
-        if (h < p) out.push(dayKey(d));
+      if (!localStorage.getItem('type.days.faked')) return;
+      if (!(window.typeAPI && window.typeAPI.listNotes)) return;   // native only; try again next launch
+      const list = await window.typeAPI.listNotes(settings.saveDir || null);
+      if (!Array.isArray(list)) return;
+      const real = new Set();
+      for (const n of list) {
+        let iso = n && (n.dateISO || n.date);
+        if (!iso && n && n.filename) { const m = String(n.filename).match(/(\d{4}-\d{2}-\d{2})/); if (m) iso = m[1]; }
+        if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) real.add(iso);
       }
-      const merged = [...new Set([...out, ...readDays()])].sort();
-      localStorage.setItem(DAYS_KEY, JSON.stringify(merged));
-      localStorage.setItem('type.days.faked', '1');
+      // if no notes are readable (e.g. a save folder that gets swept elsewhere)
+      // never wipe the rail — just retire the flag so nothing re-seeds.
+      if (real.size) localStorage.setItem(DAYS_KEY, JSON.stringify([...real].sort()));
+      localStorage.removeItem('type.days.faked');
+      applyDays();
     } catch (e) {}
   })();
-  applyDays();
   // left open overnight, "today" is yesterday's dot — redraw when the window comes
   // back rather than running a clock
   window.addEventListener('focus', applyDays);

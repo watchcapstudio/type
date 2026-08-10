@@ -6,6 +6,14 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.15.2
+
+### Changed
+- **The days grid and settings moved down to the bottom bar.** The nine-dot days opener now sits at the bottom-left and settings at the bottom-right, in line with keep and burn, instead of up in the top corners. They fade in with the bottom bar too, so nothing arrives ahead of it.
+
+### Fixed
+- **The rail no longer shows days you never wrote.** An early demo build left months of invented dots in the record. Those are gone, and the rail now rebuilds itself from your real kept notes.
+
 ## v1.15.1
 
 ### Improved
