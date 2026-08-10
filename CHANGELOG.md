@@ -6,6 +6,11 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.15.4
+
+### Changed
+- **The bottom bar reads as one row.** Keep, kept, and burn now sit at the same weight as the days and settings glyphs, and the dividers between the words are quiet dots instead of pipes.
+
 ## v1.15.3
 
 ### Fixed

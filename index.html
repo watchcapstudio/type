@@ -460,10 +460,11 @@
   .hint .l { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-faint); }
   .hint-btn { cursor: pointer; }
   .hint-btn:hover .k, .hint-btn:hover .l { color: var(--ink); }
-  .sep { width: 1px; height: 12px; border-radius: 0; background: var(--ink-faint); opacity: .5; }   /* a pipe, not a dot */
+  .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-quiet); opacity: 1; }   /* a quiet dot between the words, one weight with the row */
   /* desktop bottom bar: just the words, spaced out — the shortcut lives in a
      hover tip (like the settings info tips), not jammed inline */
   body:not(.ios) .hint .k { display: none; }   /* just words; shortcut lives in the hover tip */
+  body:not(.ios) .hint .l { color: var(--ink-quiet); }   /* match the glyphs — the whole bottom row reads at one weight */
   body:not(.ios) .hints-group:not([hidden]) { display: inline-flex; align-items: center; gap: 26px; }   /* KEEP | KEPT | BURN, breathe */
   /* small frosted tip above a bottom word, same look as the settings callout */
   .hint-tip {
