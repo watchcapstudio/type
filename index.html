@@ -370,7 +370,7 @@
     position: fixed; z-index: 13; bottom: 16px; left: 24px;   /* bottom-left, inline with the keep/burn row */
     width: 40px; height: 40px; padding: 0; border: 0; background: none;
     display: inline-flex; align-items: center; justify-content: center;
-    color: var(--ink-faint); cursor: pointer;
+    color: var(--ink-quiet); cursor: pointer;   /* thin dots need more weight than the KEEP/BURN words to read */
     -webkit-app-region: no-drag;
     transition: opacity .35s ease, color .15s ease;
   }
@@ -1121,7 +1121,7 @@
     position: fixed; z-index: 13; bottom: 16px; right: 24px;
     width: 40px; height: 40px; padding: 0;
     display: inline-flex; align-items: center; justify-content: center;
-    color: var(--ink-faint); cursor: pointer;
+    color: var(--ink-quiet); cursor: pointer;   /* thin strokes need more weight than the KEEP/BURN words to read */
     -webkit-app-region: no-drag;
     transition: opacity .35s ease, color .15s ease;
   }

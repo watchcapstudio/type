@@ -6,6 +6,11 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.15.3
+
+### Fixed
+- **The days and settings glyphs at the bottom are easier to read.** Their thin dots and strokes were drawn in the same pale grey as the KEEP and BURN labels, which left them faint and hard to make out. They now carry a little more weight.
+
 ## v1.15.2
 
 ### Changed
