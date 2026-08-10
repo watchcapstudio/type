@@ -8,8 +8,8 @@ settings:
   base:
     DEVELOPMENT_TEAM: 65TGBNLX53
     SWIFT_VERSION: "5.9"
-    MARKETING_VERSION: 1.15.0
-    CURRENT_PROJECT_VERSION: 13
+    MARKETING_VERSION: 1.15.2
+    CURRENT_PROJECT_VERSION: 14
 targets:
   type:
     type: application
