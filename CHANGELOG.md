@@ -6,6 +6,15 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.16.0
+
+### Changed
+- **The whole bottom row fades in together.** The days dots, keep, kept, burn, settings, and share used to arrive at slightly different moments; now they're one row on one timing, appearing and bowing out as a set.
+- **Share moved down to the bottom-right,** next to settings, instead of sitting alone up top.
+
+### Improved
+- **Zen mode now clears the surface completely.** On top of going fullscreen, it fades away every control, so there's nothing on the page but your words. Toggle it with ⌘⇧Z (Esc to exit).
+
 ## v1.15.4
 
 ### Changed

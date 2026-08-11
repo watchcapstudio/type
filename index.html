@@ -372,7 +372,7 @@
     display: inline-flex; align-items: center; justify-content: center;
     color: var(--ink-quiet); cursor: pointer;   /* thin dots need more weight than the KEEP/BURN words to read */
     -webkit-app-region: no-drag;
-    transition: opacity .35s ease, color .15s ease;
+    transition: opacity .7s ease, color .15s ease;   /* fades in step with the bottom bar */
   }
   body:not(.ios) .days-glyph:hover { color: var(--ink); }
   /* the phone: same corner, same job, sized like the gear opposite it. The
@@ -1106,15 +1106,15 @@
      (iOS still hugs the top-left corner, where there's no days glyph.) */
   .prose-share {
     position: fixed; z-index: 13;
-    top: 14px; right: 58px; left: auto;      /* desktop: beside the settings hamburger */
+    bottom: 16px; right: 66px; top: auto; left: auto;   /* desktop: bottom-right, just left of settings */
     width: 40px; height: 40px;
     display: inline-flex; align-items: center; justify-content: center;
-    color: var(--ink-faint); opacity: 0; pointer-events: none; cursor: pointer;   /* match the KEEP button */
-    transition: opacity .35s ease; -webkit-tap-highlight-color: transparent;
+    color: var(--ink-quiet); opacity: 0; pointer-events: none; cursor: pointer;   /* one weight with the row */
+    transition: opacity .7s ease; -webkit-tap-highlight-color: transparent;   /* fades in step with the bottom bar */
     -webkit-app-region: no-drag;            /* stays clickable over the desktop drag region */
   }
-  body.ios .prose-share {                   /* iOS: beside the gear, top-right */
-    top: calc(8px + env(safe-area-inset-top, 0px)); right: 60px; left: auto;
+  body.ios .prose-share {                   /* iOS: beside the gear, top-right (glyphs stay up top on phone) */
+    top: calc(8px + env(safe-area-inset-top, 0px)); bottom: auto; right: 60px; left: auto;
   }
   /* desktop settings opener: a hamburger in the top-right corner (mirrors iOS).
      Reuses the bottom-bar settings hint, lifted out into the corner. */
@@ -1124,28 +1124,30 @@
     display: inline-flex; align-items: center; justify-content: center;
     color: var(--ink-quiet); cursor: pointer;   /* thin strokes need more weight than the KEEP/BURN words to read */
     -webkit-app-region: no-drag;
-    transition: opacity .35s ease, color .15s ease;
+    transition: opacity .7s ease, color .15s ease;   /* fades in step with the bottom bar */
   }
   body:not(.ios) .corner-settings:hover { color: var(--ink); }
   body.settings-open:not(.ios) .corner-settings { opacity: 0; pointer-events: none; }   /* the rail takes the corner */
-  body.has-prose .prose-share { opacity: 1; pointer-events: auto; }
+  body.chrome-in.has-prose .prose-share { opacity: 1; pointer-events: auto; }   /* only once the row is in AND there's prose */
   .prose-share:hover, .prose-share:active { color: var(--ink); }
   body.reviewing .prose-share, body.feedback .prose-share { opacity: 0 !important; pointer-events: none; }
   body.reviewing:not(.ios) .days-glyph, body.feedback .days-glyph { opacity: 0; pointer-events: none; }
-  body.typing .days-glyph { opacity: 0; pointer-events: none; }   /* clean screen while the words flow */
-  /* clean screen while typing — the corner glyphs (share / settings) fade out and
-     come back the moment you pause */
-  body.ios .hint.ios-settings { transition: opacity .35s ease, color .15s ease; }
-  body.typing .prose-share, body.typing .hint.ios-settings { opacity: 0 !important; pointer-events: none; }
-  /* the top corner glyphs (days top-left, settings top-right) don't appear at
-     launch — they wait for the bottom bar's first reveal and fade in on its
-     timing, so nothing arrives ahead of the hints. */
-  body.chrome-hold .days-glyph,
-  body.chrome-hold:not(.ios) .corner-settings,
-  body.ios.chrome-hold .hint.ios-settings { opacity: 0 !important; pointer-events: none !important; transition: none !important; }
-  body.chrome-reveal .days-glyph,
-  body.chrome-reveal:not(.ios) .corner-settings,
-  body.ios.chrome-reveal .hint.ios-settings { transition: opacity .7s ease !important; }
+  body.ios .hint.ios-settings { transition: opacity .7s ease, color .15s ease; }
+  /* The whole control set — days dots, settings, share, and the bottom bar — is
+     one row: it shows and hides together, on one .7s, driven by `chrome-in`
+     (which mirrors the bar's own visible/dim state). Nothing arrives ahead of
+     anything else, at launch or when you pause after typing. */
+  body:not(.chrome-in) .days-glyph,
+  body:not(.chrome-in):not(.ios) .corner-settings,
+  body.ios:not(.chrome-in) .hint.ios-settings,
+  body:not(.chrome-in) .prose-share { opacity: 0; pointer-events: none; }
+  /* Zen: fullscreen AND nothing on the writing surface. Every control fades out
+     and stays out until Zen is switched off (⌘⇧Z, or Esc to exit). */
+  body.zen .hints,
+  body.zen .days-glyph,
+  body.zen:not(.ios) .corner-settings,
+  body.zen.ios .hint.ios-settings,
+  body.zen .prose-share { opacity: 0 !important; pointer-events: none !important; }
   /* the visible way in: a quiet "kept" in the top-left, mirroring settings
      top-right. Bows out while the keyboard's up so writing stays clean. */
   body.ios .ios-kept-entry {
@@ -1350,7 +1352,7 @@
 
 </style>
 </head>
-<body class="chrome-hold">
+<body>
   <div class="window-drag" aria-hidden="true"></div>
   <div class="stage" id="stage">
     <div class="platen">
@@ -1443,7 +1445,7 @@
         <label class="setrow"><span>Word count</span><input type="checkbox" id="setWordCount" /><span class="sw"></span></label>
         <label class="setrow"><span>Pages</span><input type="checkbox" id="setPages" /><span class="sw"></span></label>
         <label class="setrow"><span>Timer</span><input type="checkbox" id="setTimer" /><span class="sw"></span></label>
-        <label class="setrow"><span>Zen mode <span class="info" tabindex="0">i<span class="tip">Goes fullscreen. Just you and the page. ⌘⇧F to toggle, Esc to exit.</span></span></span><input type="checkbox" id="setZen" /><span class="sw"></span></label>
+        <label class="setrow"><span>Zen mode <span class="info" tabindex="0">i<span class="tip">Fullscreen, and nothing on the page — every control fades away. ⌘⇧Z to toggle, Esc to exit.</span></span></span><input type="checkbox" id="setZen" /><span class="sw"></span></label>
         <label class="setrow setrow-onTop" id="rowOnTop" hidden><span>Stay on top <span class="info" tabindex="0">i<span class="tip">Keeps the type window above all others. Good for jotting while reading something else.</span></span></span><input type="checkbox" id="setOnTop" /><span class="sw"></span></label>
       </div>
     </section>
@@ -1535,18 +1537,12 @@
   const editSurface = document.getElementById('editSurface');
   const introEl = document.getElementById('intro');
   const hints   = document.getElementById('hints');
-  // The top corner glyphs hold hidden until the bottom bar first un-dims, then
-  // fade in on its timing (.7s). One-shot: after the first reveal they follow
-  // the normal typing/pause behavior. Observing #hints covers every path that
-  // brings the controls in (intro end, skip, restored draft, settings).
-  const revealChrome = () => {
-    if (!document.body.classList.contains('chrome-hold')) return;
-    document.body.classList.add('chrome-reveal');
-    document.body.classList.remove('chrome-hold');
-    setTimeout(() => document.body.classList.remove('chrome-reveal'), 760);
-  };
-  new MutationObserver(() => { if (!hints.classList.contains('dim')) revealChrome(); })
-    .observe(hints, { attributes: true, attributeFilter: ['class'] });
+  // The days dots, settings, and share ride with the bottom bar as one row:
+  // `chrome-in` mirrors the bar's visible/dim state, so all of them fade in and
+  // out together on one .7s — at launch and every time you pause after typing.
+  const syncChrome = () => document.body.classList.toggle('chrome-in', !hints.classList.contains('dim'));
+  new MutationObserver(syncChrome).observe(hints, { attributes: true, attributeFilter: ['class'] });
+  syncChrome();
   const stampEl = document.getElementById('stamp');
   const stampDate = document.getElementById('stampDate');
   const stampKept = document.getElementById('stampKept');
@@ -2285,6 +2281,7 @@
   /* ================= ZEN / STAY-ON-TOP ================= */
   // Zen = fullscreen, edge-to-edge, just you and the page.
   function applyZen() {
+    document.body.classList.toggle('zen', !!settings.zen);   // hides every control; the surface goes bare
     if (desktop && window.typeAPI.setZen) { window.typeAPI.setZen(!!settings.zen); return; }
     // browser: the Fullscreen API needs a user gesture, which the settings click provides
     try {
@@ -4226,9 +4223,10 @@
       }
       return;
     }
-    // ⌘⇧F toggles Zen. macOS's system "Toggle Full Screen" (⌃⌘F) still works
-    // as a backup via the menu — main process keeps settings + checkbox in sync.
-    if (e.metaKey && e.shiftKey && (e.key === 'f' || e.key === 'F')) {
+    // ⌘⇧Z toggles Zen (fullscreen + a bare surface). Not ⌘Z — that's undo.
+    // macOS's system "Toggle Full Screen" (⌃⌘F) still flips it too, since the
+    // main process keeps settings + checkbox in sync on any fullscreen change.
+    if (e.metaKey && e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
       e.preventDefault();
       settings.zen = !settings.zen;
       boxes.zen.checked = settings.zen;
