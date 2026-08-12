@@ -8,6 +8,9 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
+    "postinstall": "bash scripts/adhoc-sign-electron.sh",
+    "sign:electron": "bash scripts/adhoc-sign-electron.sh",
+    "prestart": "bash scripts/adhoc-sign-electron.sh",
     "start": "electron .",
     "dist": "electron-builder --mac",
     "dist:unsigned": "CSC_IDENTITY_AUTODISCOVERY=false electron-builder --mac -c.mac.notarize=false -c.mac.identity=null"
