@@ -2279,34 +2279,31 @@
   }
 
   /* ================= ZEN / STAY-ON-TOP ================= */
-  // Zen = fullscreen, edge-to-edge, just you and the page.
+  // Zen just clears the surface: it fades out the bottom glyphs and every other
+  // control. It is decoupled from fullscreen — turning Zen ON from a windowed
+  // state also opens up to fullscreen, but Zen never LEAVES fullscreen. Toggling
+  // Zen off (or on again once you're already fullscreen) only touches the glyphs.
+  let isFullscreen = !!document.fullscreenElement;
   function applyZen() {
     document.body.classList.toggle('zen', !!settings.zen);   // hides every control; the surface goes bare
-    if (desktop && window.typeAPI.setZen) { window.typeAPI.setZen(!!settings.zen); return; }
+    if (!settings.zen) return;                               // leaving Zen never exits fullscreen
+    if (desktop) {
+      if (!isFullscreen && window.typeAPI.setZen) window.typeAPI.setZen(true);
+      return;
+    }
     // browser: the Fullscreen API needs a user gesture, which the settings click provides
-    try {
-      if (settings.zen && !document.fullscreenElement) document.documentElement.requestFullscreen();
-      else if (!settings.zen && document.fullscreenElement) document.exitFullscreen();
-    } catch (e) {}
+    try { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); } catch (e) {}
   }
   function applyOnTop() {
     if (desktop && window.typeAPI.setOnTop) window.typeAPI.setOnTop(!!settings.onTop);
   }
-  // keep the Zen toggle honest if the user leaves fullscreen with Esc (browser)
-  document.addEventListener('fullscreenchange', () => {
-    const fs = !!document.fullscreenElement;
-    if (!desktop && settings.zen !== fs) { settings.zen = fs; boxes.zen.checked = fs; saveSettings(); }
-  });
+  // track fullscreen so entering Zen knows whether it still needs to open up;
+  // fullscreen changes no longer flip Zen (they are independent now)
+  document.addEventListener('fullscreenchange', () => { isFullscreen = !!document.fullscreenElement; });
   // desktop: main process tells us when the window enters/leaves native fullscreen
   // (covers ⌃⌘F system shortcut, green-button menu, our own setZen call, etc.)
   if (desktop && window.typeAPI.onFullscreenChanged) {
-    window.typeAPI.onFullscreenChanged((fs) => {
-      if (settings.zen !== fs) {
-        settings.zen = fs;
-        boxes.zen.checked = fs;
-        saveSettings();
-      }
-    });
+    window.typeAPI.onFullscreenChanged((fs) => { isFullscreen = fs; });
   }
   applyOnTop();
   if (settings.zen) applyZen();
@@ -2358,12 +2355,11 @@
   let introTimers = [];
   let bellRung = false;
   let accentPeriod = false;        // colors a line's trailing period (the "type." burnt-orange dot)
-  let quoteHold = null;            // when a quote is seeded, holds it in place until you've written under it
+  let quoteHold = null;            // vestigial: a seeded quote used to freeze here; it now just rolls up like any line
   let sheetStart = null;           // when the current sheet's writing began (for the timer)
   let userFloor = 0;               // index in locked where your own writing starts (seeded quote excluded from word count)
   let quoteShown = false;          // a seeded quote is currently on the page (removable via the ×)
   let activeQuote = null;          // the quote object currently on the page — used by the share button
-  const QUOTE_HOLD_ROWS = 3;       // lines you can type beneath a quote before it starts rolling up
 
   // "started" = your own ink is on the sheet (a still-typing seeded quote or
   // welcome doesn't count). Gates the editable-page switch: it can only flip
@@ -3162,14 +3158,11 @@
       const target = feed.children[cursor.line];
       baseY = target ? target.offsetTop : cursor.line * lh;
     } else {
+      // The writing line always rests at the strike point (screen middle) — the
+      // same rule as ordinary writing. A seeded quote just rolls up above it as
+      // you write, instead of freezing and dropping the cursor down the page
+      // (that left a growing gap between your text and the cursor).
       baseY = activeEl ? activeEl.offsetTop : locked.length * lh;
-      if (quoteHold) {
-        const d = locked.length - quoteHold.floor;  // lines you've committed since the quote
-        const H = QUOTE_HOLD_ROWS;
-        if (d <= H) baseY -= d * lh;                // hold: quote frozen, cursor descends
-        else if (d <= 2 * H) baseY -= (2 * H - d) * lh;  // catch up: roll back to the strike point
-        else quoteHold = null;                      // done — ordinary centered writing
-      }
     }
     // A long active line wraps DOWNWARD as you type; without this it would grow
     // past the strike point into the keyboard. Roll the platen by the caret's
@@ -4223,9 +4216,9 @@
       }
       return;
     }
-    // ⌘⇧Z toggles Zen (fullscreen + a bare surface). Not ⌘Z — that's undo.
-    // macOS's system "Toggle Full Screen" (⌃⌘F) still flips it too, since the
-    // main process keeps settings + checkbox in sync on any fullscreen change.
+    // ⌘⇧Z toggles Zen (a bare surface; opens up to fullscreen the first time).
+    // Not ⌘Z — that's undo. Fullscreen and Zen are independent now, so ⌃⌘F only
+    // changes fullscreen and leaves the glyphs alone.
     if (e.metaKey && e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
       e.preventDefault();
       settings.zen = !settings.zen;

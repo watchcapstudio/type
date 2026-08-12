@@ -6,6 +6,12 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.16.1
+
+### Fixed
+- **Zen mode no longer drags fullscreen around with it.** Turning Zen on from a window still opens up to fullscreen, but turning it off leaves you in fullscreen instead of dropping back to a window. Once you're fullscreen, Zen only clears and restores the controls.
+- **The cursor stays on the writing line after Return.** With an opening quote on the page, pressing Return used to drop the cursor down the page and leave a gap above it. The quote now rolls up like any other line and the writing line holds its place at the middle.
+
 ## v1.16.0
 
 ### Changed
