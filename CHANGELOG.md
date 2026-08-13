@@ -6,6 +6,12 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.16.2
+
+### Fixed
+- **A new line's cursor now waits on the left margin.** When you pressed Return, the cursor on the fresh empty line sat a character to the left of where your text actually lands, then jumped into place the moment you started typing. It sits in the right spot from the start now.
+- **Zen mode fills the whole screen.** Zen now goes truly edge-to-edge, with no black bar across the top. Leaving Zen closes that fullscreen again.
+
 ## v1.16.1
 
 ### Fixed

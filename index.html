@@ -2279,19 +2279,28 @@
   }
 
   /* ================= ZEN / STAY-ON-TOP ================= */
-  // Zen just clears the surface: it fades out the bottom glyphs and every other
-  // control. It is decoupled from fullscreen — turning Zen ON from a windowed
-  // state also opens up to fullscreen, but Zen never LEAVES fullscreen. Toggling
-  // Zen off (or on again once you're already fullscreen) only touches the glyphs.
+  // Zen clears the surface — it fades out the bottom glyphs and every other
+  // control — and rides its own immersive "simple" fullscreen. Turning Zen ON
+  // from a windowed state opens that fullscreen; turning it OFF closes it again
+  // (simple fullscreen has no exit button, so Zen has to own it). The one case
+  // Zen leaves the frame alone: you're already in NATIVE fullscreen (green
+  // button / ⌃⌘F) — then Zen only toggles the glyphs.
   let isFullscreen = !!document.fullscreenElement;
   function applyZen() {
     document.body.classList.toggle('zen', !!settings.zen);   // hides every control; the surface goes bare
-    if (!settings.zen) return;                               // leaving Zen never exits fullscreen
     if (desktop) {
-      if (!isFullscreen && window.typeAPI.setZen) window.typeAPI.setZen(true);
+      // Zen owns an immersive "simple" fullscreen (edge-to-edge, no notch/menu
+      // black bar). Entering Zen from a window opens it; if you're already in
+      // NATIVE fullscreen, leave the frame alone and only clear the glyphs.
+      // Leaving Zen closes only the fullscreen Zen itself opened.
+      if (window.typeAPI.setZen) {
+        if (settings.zen && isFullscreen) { /* already native fullscreen — glyphs only */ }
+        else window.typeAPI.setZen(!!settings.zen);
+      }
       return;
     }
     // browser: the Fullscreen API needs a user gesture, which the settings click provides
+    if (!settings.zen) return;
     try { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); } catch (e) {}
   }
   function applyOnTop() {
@@ -3068,6 +3077,12 @@
     });
     el.addEventListener('focus', positionEditCaret);
     el.addEventListener('blur', () => { if (editCaret) editCaret.style.display = 'none'; });
+    // The carriage sweep (.cr) slides the fresh line home from translateX(-11px)
+    // over .24s. The painted caret is placed once, right as the sweep starts, so
+    // on an empty line it lands a character left of the margin and stays there
+    // until the first keystroke fires a selectionchange. Re-home it the moment
+    // the sweep settles, so a fresh line's cursor sits on the margin.
+    el.addEventListener('animationend', (e) => { if (e.animationName === 'carriage') positionEditCaret(); });
     // hardware-keyboard return (no beforeinput insertParagraph on some setups)
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {

@@ -147,7 +147,17 @@ ipcMain.handle('type:default-save-dir', () => {
 
 ipcMain.handle('type:set-zen', (e, on) => {
   const w = BrowserWindow.fromWebContents(e.sender);
-  if (w) w.setFullScreen(!!on);
+  if (!w) return true;
+  // Zen uses SIMPLE (kiosk-style) fullscreen, which covers the entire display —
+  // including the menu-bar / notch strip that native fullscreen leaves black at
+  // the top. That black bar is exactly what Zen shouldn't have. We never fight an
+  // existing native fullscreen (green button / ⌃⌘F): if the window is already
+  // natively fullscreen, Zen just clears the glyphs and leaves the frame alone.
+  if (on) {
+    if (!w.isFullScreen()) w.setSimpleFullScreen(true);
+  } else if (w.isSimpleFullScreen()) {
+    w.setSimpleFullScreen(false);   // only exits the fullscreen Zen itself opened
+  }
   return true;
 });
 
