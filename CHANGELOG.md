@@ -6,6 +6,11 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.16.3
+
+### Changed
+- **Fullscreen is edge-to-edge everywhere now, not just in Zen.** Both Zen and ⌃⌘F fill the whole screen with nothing at the top. The green window button now maximizes instead of entering the old fullscreen, so there's no way left to land on the black-bar version.
+
 ## v1.16.2
 
 ### Fixed

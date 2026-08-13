@@ -45,6 +45,12 @@ function createWindow() {
     minHeight: 360,
     backgroundColor: '#ffffff',
     titleBarStyle: 'hiddenInset',   // mac: keep the traffic lights, drop the title bar
+    // Native macOS fullscreen leaves the menu-bar / notch strip black at the top.
+    // type's fullscreen is always the immersive "simple" kind (edge-to-edge, no
+    // bar) — driven by Zen and ⌃⌘F. Disabling native fullscreen keeps the green
+    // button and any stray path from producing the black-bar version; the green
+    // button becomes a zoom (maximize) instead.
+    fullscreenable: false,
     title: 'type',
     icon: path.join(__dirname, 'build', 'icon.icns'),
     // Hide until first paint is ready so the user never sees the white-flash-
@@ -438,6 +444,15 @@ function checkForUpdatesManually() {
   });
 }
 
+// type's one and only fullscreen: simple (kiosk) fullscreen, which covers the
+// whole display including the notch/menu strip. Shared by the ⌃⌘F menu item and,
+// via type:set-zen, by Zen.
+function toggleSimpleFullScreen(win) {
+  const w = win || BrowserWindow.getFocusedWindow();
+  if (!w) return;
+  w.setSimpleFullScreen(!w.isSimpleFullScreen());
+}
+
 function buildMenu() {
   const template = [
     {
@@ -457,7 +472,27 @@ function buildMenu() {
       ],
     },
     { role: 'editMenu' },
-    { role: 'viewMenu' },
+    {
+      // A custom View menu: the default role:'viewMenu' carries the native
+      // "Toggle Full Screen" (⌃⌘F), which opens the black-bar fullscreen. We keep
+      // the useful items and swap in our own ⌃⌘F that toggles simple fullscreen.
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        {
+          label: 'Toggle Full Screen',
+          accelerator: 'Control+Command+F',
+          click: (_item, win) => toggleSimpleFullScreen(win),
+        },
+      ],
+    },
     { role: 'windowMenu' },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
