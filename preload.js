@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld('typeAPI', {
   captureFeedback: () => ipcRenderer.invoke('type:capture-feedback'),
   setZen: (on) => ipcRenderer.invoke('type:set-zen', !!on),
   setOnTop: (on) => ipcRenderer.invoke('type:set-on-top', !!on),
+  // paints the native window background to match the current theme's paper, so
+  // the title-bar strip (visible in fullscreen) matches instead of flashing the
+  // default white — which reads as a cool/blue bar against a dark or amber page
+  setShellTheme: (payload) => ipcRenderer.invoke('type:set-shell-theme', payload),
   // fires whenever the window enters or leaves macOS native fullscreen, so
   // settings.zen stays in sync no matter how it was triggered (settings click,
   // ⌃⌘F system shortcut, green-button menu, Esc, etc.)

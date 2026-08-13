@@ -6,6 +6,12 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.16.4
+
+### Fixed
+- **Zen keeps your place in the line.** Toggling Zen (⌘⇧Z) held the window but dropped the cursor, so the next keystroke went nowhere until you clicked back in. Focus stays on the writing line now.
+- **The top edge matches the theme.** The strip behind the window buttons was painted white, which read as a cool blue bar against a dark or amber page. It now takes the theme's paper color, so it disappears into the page.
+
 ## v1.16.3
 
 ### Changed

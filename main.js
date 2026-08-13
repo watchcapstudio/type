@@ -173,6 +173,18 @@ ipcMain.handle('type:set-on-top', (e, on) => {
   return true;
 });
 
+// Paint the native window background to the theme's paper color. The title-bar
+// region (hiddenInset) isn't painted by the page, so a static white background
+// shows as a cool/blue bar at the top of a dark or amber page — most visible in
+// fullscreen. Matching it to --paper makes the bar disappear into the theme.
+const HEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+ipcMain.handle('type:set-shell-theme', (e, payload) => {
+  const w = BrowserWindow.fromWebContents(e.sender);
+  const bg = payload && typeof payload.bg === 'string' ? payload.bg.trim() : '';
+  if (w && HEX.test(bg)) w.setBackgroundColor(bg);
+  return true;
+});
+
 // --- native share sheet bridge ---
 // renderer hands us a PNG data URL; we write it to a temp file and spawn the
 // Swift helper (build/type-share) which presents NSSharingServicePicker.

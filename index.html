@@ -2297,6 +2297,15 @@
         if (settings.zen && isFullscreen) { /* already native fullscreen — glyphs only */ }
         else window.typeAPI.setZen(!!settings.zen);
       }
+      // Toggling simple fullscreen blurs the editable line — the window keeps key
+      // but the caret is dropped, so the next keystroke goes nowhere until you
+      // click. Put focus back on the writing surface once the toggle settles.
+      if (phase === 'writing' && !frozen) {
+        requestAnimationFrame(() => {
+          if (editActive()) { if (editSurface) editSurface.focus({ preventScroll: true }); }
+          else focusActiveEnd();
+        });
+      }
       return;
     }
     // browser: the Fullscreen API needs a user gesture, which the settings click provides
