@@ -6,6 +6,16 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.16.5
+
+### Fixed
+- **Updates install when you press restart.** Every check handed the same download to the installer again, and the copies tripped over each other: one would relaunch type while the next was still waiting for it to quit, so the install aborted and the prompt came right back. The update is handed over once now, when you ask for it.
+- **The hairline around the screen in fullscreen is gone.** Fullscreen had been a window stretched over the display, so it still carried its window edge. It's the real thing again, with no frame to draw.
+- **The menu bar comes down in the page's color,** not the desktop's blue behind it.
+
+### Changed
+- **Fullscreen leaves the menu bar's strip at the top of the screen again.** It takes the theme's paper color, so it sits with the page rather than reading as a bar.
+
 ## v1.16.4
 
 ### Fixed

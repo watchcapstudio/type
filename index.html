@@ -1599,7 +1599,7 @@
   // A quiet, progress-aware replacement for the old stack of native modal
   // dialogs. The new version downloads in the background; this shows how far
   // along it is, then offers a one-tap restart. Ignoring it is fine — the
-  // update still installs on its own the next time you quit.
+  // download waits on disk and the restart button is still there next launch.
   (function setupUpdate() {
     const el = document.getElementById('update');
     if (!el || !window.typeAPI || typeof window.typeAPI.onUpdate !== 'function') return;
@@ -2280,24 +2280,22 @@
 
   /* ================= ZEN / STAY-ON-TOP ================= */
   // Zen clears the surface — it fades out the bottom glyphs and every other
-  // control — and rides its own immersive "simple" fullscreen. Turning Zen ON
-  // from a windowed state opens that fullscreen; turning it OFF closes it again
-  // (simple fullscreen has no exit button, so Zen has to own it). The one case
-  // Zen leaves the frame alone: you're already in NATIVE fullscreen (green
-  // button / ⌃⌘F) — then Zen only toggles the glyphs.
+  // control — and opens fullscreen on the way in. Turning Zen ON from a windowed
+  // state opens it; turning it OFF closes it again. The one case Zen leaves the
+  // frame alone: you were already fullscreen (green button / ⌃⌘F) before Zen —
+  // then Zen only toggles the glyphs and leaves your fullscreen where it was.
   let isFullscreen = !!document.fullscreenElement;
   function applyZen() {
     document.body.classList.toggle('zen', !!settings.zen);   // hides every control; the surface goes bare
     if (desktop) {
-      // Zen owns an immersive "simple" fullscreen (edge-to-edge, no notch/menu
-      // black bar). Entering Zen from a window opens it; if you're already in
-      // NATIVE fullscreen, leave the frame alone and only clear the glyphs.
-      // Leaving Zen closes only the fullscreen Zen itself opened.
+      // Entering Zen from a window opens fullscreen; if you're already fullscreen,
+      // leave the frame alone and only clear the glyphs. Leaving Zen closes only
+      // the fullscreen Zen itself opened (the main process tracks which).
       if (window.typeAPI.setZen) {
-        if (settings.zen && isFullscreen) { /* already native fullscreen — glyphs only */ }
+        if (settings.zen && isFullscreen) { /* already fullscreen — glyphs only */ }
         else window.typeAPI.setZen(!!settings.zen);
       }
-      // Toggling simple fullscreen blurs the editable line — the window keeps key
+      // Toggling fullscreen blurs the editable line — the window keeps key
       // but the caret is dropped, so the next keystroke goes nowhere until you
       // click. Put focus back on the writing surface once the toggle settles.
       if (phase === 'writing' && !frozen) {

@@ -45,12 +45,13 @@ function createWindow() {
     minHeight: 360,
     backgroundColor: '#ffffff',
     titleBarStyle: 'hiddenInset',   // mac: keep the traffic lights, drop the title bar
-    // Native macOS fullscreen leaves the menu-bar / notch strip black at the top.
-    // type's fullscreen is always the immersive "simple" kind (edge-to-edge, no
-    // bar) — driven by Zen and ⌃⌘F. Disabling native fullscreen keeps the green
-    // button and any stray path from producing the black-bar version; the green
-    // button becomes a zoom (maximize) instead.
-    fullscreenable: false,
+    // Fullscreen is the NATIVE macOS kind. The "simple" (kiosk) kind we used for
+    // a while covered the notch strip too, but it's just a window stretched over
+    // the screen: it keeps its window frame, so a hairline traced the whole
+    // display, and the menu bar dropped over the desktop instead of the app —
+    // arriving in the wallpaper's color. Native fullscreen has no frame and lets
+    // the system tint the menu bar from the page. The strip it reserves at the
+    // top takes the window background, which tracks --paper (see set-shell-theme).
     title: 'type',
     icon: path.join(__dirname, 'build', 'icon.icns'),
     // Hide until first paint is ready so the user never sees the white-flash-
@@ -151,18 +152,17 @@ ipcMain.handle('type:default-save-dir', () => {
   return { dir, icloud, label: icloud ? 'iCloud Drive · type' : 'Downloads' };
 });
 
+// Zen opens fullscreen on its way in, so leaving Zen should close that same
+// fullscreen — but not one you opened yourself with ⌃⌘F or the green button.
+let zenOpenedFullScreen = false;
 ipcMain.handle('type:set-zen', (e, on) => {
   const w = BrowserWindow.fromWebContents(e.sender);
   if (!w) return true;
-  // Zen uses SIMPLE (kiosk-style) fullscreen, which covers the entire display —
-  // including the menu-bar / notch strip that native fullscreen leaves black at
-  // the top. That black bar is exactly what Zen shouldn't have. We never fight an
-  // existing native fullscreen (green button / ⌃⌘F): if the window is already
-  // natively fullscreen, Zen just clears the glyphs and leaves the frame alone.
   if (on) {
-    if (!w.isFullScreen()) w.setSimpleFullScreen(true);
-  } else if (w.isSimpleFullScreen()) {
-    w.setSimpleFullScreen(false);   // only exits the fullscreen Zen itself opened
+    if (!w.isFullScreen()) { zenOpenedFullScreen = true; w.setFullScreen(true); }
+  } else if (zenOpenedFullScreen) {
+    zenOpenedFullScreen = false;
+    if (w.isFullScreen()) w.setFullScreen(false);
   }
   return true;
 });
@@ -390,7 +390,17 @@ ipcMain.handle('type:open-folder', async (_e, dir) => {
 // dmg in the background, prompts on quit to install. needs the .app to be
 // signed + notarized, which it is.
 autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+// Do NOT hand the download to Squirrel on every check. With this on, each
+// background check queued another ShipIt install request; they stacked up, and
+// when the restart finally came one leftover installer relaunched the app while
+// the next was still waiting for it to quit — "there are 1 running instances of
+// the target app", install aborted, toast came back. Forever. The update now
+// goes to Squirrel exactly once, when the restart button asks for it.
+autoUpdater.autoInstallOnAppQuit = false;
+
+// once an update is sitting on disk waiting for a restart, stop checking —
+// re-checking only re-runs the same download-and-hand-off dance
+let updateReady = false;
 
 // The renderer owns all update UX now — a quiet, progress-aware toast instead
 // of a stack of native modal dialogs. We just forward electron-updater's
@@ -419,6 +429,7 @@ autoUpdater.on('download-progress', (p) => {
 });
 
 autoUpdater.on('update-downloaded', (info) => {
+  updateReady = true;
   sendUpdate({ state: 'ready', version: info.version });
 });
 
@@ -450,19 +461,23 @@ function checkForUpdatesManually() {
     }).catch(() => {});
     return;
   }
+  // already downloaded and waiting on a restart — say so instead of fetching it again
+  if (updateReady) { sendUpdate({ state: 'ready' }); return; }
   manualCheckInProgress = true;
   autoUpdater.checkForUpdates().catch((err) => {
     log.error('manual check failed', err);
   });
 }
 
-// type's one and only fullscreen: simple (kiosk) fullscreen, which covers the
-// whole display including the notch/menu strip. Shared by the ⌃⌘F menu item and,
-// via type:set-zen, by Zen.
-function toggleSimpleFullScreen(win) {
-  const w = win || BrowserWindow.getFocusedWindow();
+// ⌃⌘F, same fullscreen Zen uses. Fullscreen opened this way is yours, not Zen's,
+// so leaving Zen won't close it.
+function toggleFullScreen(win) {
+  // the menu item can fire with no focused window (clicked while another app is
+  // front); fall back to the one window this app has
+  const w = win || BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
   if (!w) return;
-  w.setSimpleFullScreen(!w.isSimpleFullScreen());
+  zenOpenedFullScreen = false;
+  w.setFullScreen(!w.isFullScreen());
 }
 
 function buildMenu() {
@@ -485,9 +500,8 @@ function buildMenu() {
     },
     { role: 'editMenu' },
     {
-      // A custom View menu: the default role:'viewMenu' carries the native
-      // "Toggle Full Screen" (⌃⌘F), which opens the black-bar fullscreen. We keep
-      // the useful items and swap in our own ⌃⌘F that toggles simple fullscreen.
+      // A custom View menu: same items as role:'viewMenu', but with our own
+      // ⌃⌘F so Zen and the menu item run through one fullscreen path.
       label: 'View',
       submenu: [
         { role: 'reload' },
@@ -501,7 +515,7 @@ function buildMenu() {
         {
           label: 'Toggle Full Screen',
           accelerator: 'Control+Command+F',
-          click: (_item, win) => toggleSimpleFullScreen(win),
+          click: (_item, win) => toggleFullScreen(win),
         },
       ],
     },
@@ -525,8 +539,12 @@ app.whenReady().then(() => {
   // identity for electron-updater to verify against
   if (app.isPackaged) {
     setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 5000);
-    // check again every 6 hours while the app is running
-    setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 6 * 60 * 60 * 1000);
+    // check again every 6 hours while the app is running — unless one is already
+    // downloaded and waiting on the restart
+    setInterval(() => {
+      if (updateReady) return;
+      autoUpdater.checkForUpdates().catch(() => {});
+    }, 6 * 60 * 60 * 1000);
   }
 });
 
