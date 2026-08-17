@@ -2284,6 +2284,11 @@
   // state opens it; turning it OFF closes it again. The one case Zen leaves the
   // frame alone: you were already fullscreen (green button / ⌃⌘F) before Zen —
   // then Zen only toggles the glyphs and leaves your fullscreen where it was.
+  // declared up here, not down with the rest of the writing state: applyZen()
+  // reads both, and boot calls it before that block runs when Zen is saved on.
+  // Left below, the temporal dead zone threw and took the whole script with it.
+  let phase = 'intro';
+  let frozen = false;
   let isFullscreen = !!document.fullscreenElement;
   function applyZen() {
     document.body.classList.toggle('zen', !!settings.zen);   // hides every control; the surface goes bare
@@ -2364,8 +2369,6 @@
   let current = '';
   let cursor = null;               // { line, col } while ↑ has moved the cursor onto a committed line; null = ordinary writing
   let activeEl = null;
-  let phase = 'intro';
-  let frozen = false;
   let idleTimer = null;
   let typeRestTimer = null;
   let introTimers = [];

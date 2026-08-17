@@ -6,6 +6,11 @@ auto-updater and kellyvohs.com/type both read from.
 
 ---
 
+## v1.16.6
+
+### Fixed
+- **type opens again with Zen on.** With Zen saved on, the app came up to a blank page that swallowed every keystroke. The startup script hit an error before it finished setting up, so nothing was drawn and no keys were listened for. It starts clean now, in Zen or out of it.
+
 ## v1.16.5
 
 ### Fixed
